@@ -3,7 +3,7 @@
 ##  **처음 작업 전 확인해주세요!**
 ### 1. python version: 3.9.12
 
-### 2. pip install -r requirment.txt
+### 2. 가상환경 생성 > pip install -r requirment.txt
 
 ### 3. .config_secret/settings_common.json 생성 (secret_key, database setting)
 
