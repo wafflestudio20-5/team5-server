@@ -6,6 +6,24 @@
 ### 2. 가상환경 생성 > pip install -r requirment.txt
 
 ### 3. .config_secret/settings_common.json 생성 (secret_key, database setting)
+```
+{
+  "django": {
+    "secret_key": "(Django secret key)",
+    "database": {
+        "default": { 
+          "ENGINE": "django.db.backends.postgresql", 
+          "NAME": "(DB 이름)", 
+          "USER": "(user 이름)", 
+          "PASSWORD": "(DB 접속 비밀번호)", 
+          "HOST": "localhost", 
+          "PORT": "5432"
+      }
+    }
+  }
+}
+
+```
 
 ### 4. runserver 명령어
 
