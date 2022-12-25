@@ -50,6 +50,10 @@ REST_FRAMEWORK_APPS = [
     "dj_rest_auth",
 ]
 
+OTHER_TOOL_APPS = [
+    "drf_yasg",
+]
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -57,7 +61,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-] + REST_FRAMEWORK_APPS + CUSTOM_APPS
+] + REST_FRAMEWORK_APPS + OTHER_TOOL_APPS + CUSTOM_APPS
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
