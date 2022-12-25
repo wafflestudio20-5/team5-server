@@ -41,3 +41,5 @@ $ python manage.py runserver -settings=config.settings.deploy
 ```
 export DJANGO_SETTINGS_MODULE=config.settings.debug
 ```
+
+[test 중] github merge로 PR전 작업해보기
