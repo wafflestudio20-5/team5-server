@@ -1,7 +1,0 @@
-{
-    "django": {
-      "allowed_hosts": [
-        ".compute.amazonaws.com"
-      ]
-    }
-}

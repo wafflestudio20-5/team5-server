@@ -69,6 +69,15 @@ INSTALLED_APPS = [
     "django.contrib.sites",
 ] + REST_FRAMEWORK_APPS + OTHER_TOOL_APPS + CUSTOM_APPS
 
+# depoy(DEBUG=False)일 때, static 파일 보여주는 용도
+CUSTOM_MIDDLEWARE = [
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+]
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_MANIFEST_STRICT = False
+WHITENOISE_ALLOW_ALL_ORIGINS = True
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -77,7 +86,9 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-]
+] + CUSTOM_MIDDLEWARE
+
+
 
 ROOT_URLCONF = "config.urls"
 
@@ -103,7 +114,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-DATABASES = config_secret_common['django']['database']
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -134,6 +145,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = "static/"
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
