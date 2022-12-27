@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 from pathlib import Path
 import os, json
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -46,7 +47,12 @@ CUSTOM_APPS = [
 REST_FRAMEWORK_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
+    "rest_framework_simplejwt.token_blacklist",
     "dj_rest_auth",
+    "dj_rest_auth.registration",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount"
 ]
 
 OTHER_TOOL_APPS = [
@@ -60,6 +66,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
 ] + REST_FRAMEWORK_APPS + OTHER_TOOL_APPS + CUSTOM_APPS
 
 MIDDLEWARE = [
@@ -135,9 +142,50 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+        'dj_rest_auth.jwt_auth.JWTCookieAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     ]
 }
+
+SITE_ID = 1
+# JWT authentication will be used by dj-rest-auth
+REST_USE_JWT = True
+# cookie key called as..
+JWT_AUTH_COOKIE = 'my-app-auth'
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=3),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+}
+
+AUTHENTICATION_BACKENDS = [
+    'allauth.account.auth_backends.AuthenticationBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True
+LOGIN_URL = 'login'
+
+# URL_FRONT = 'http://****'  # 공개적인 웹페이지가 있다면 등록
+
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1
+
+# 이메일에 자동으로 표시되는 사이트 정보
+ACCOUNT_EMAIL_SUBJECT_PREFIX = "Kream-Waffle "
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = '587'
+EMAIL_HOST_USER = config_secret_common['EMAIL_HOST_USER']
+EMAIL_HOST_PASSWORD = config_secret_common['EMAIL_HOST_PASSWORD']
+EMAIL_USE_TLS = True # TLS 보안 방법
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
