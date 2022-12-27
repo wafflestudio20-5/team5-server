@@ -47,6 +47,7 @@ CUSTOM_APPS = [
 REST_FRAMEWORK_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
+    "rest_framework_simplejwt.token_blacklist",
     "dj_rest_auth",
     "dj_rest_auth.registration",
     "allauth",
@@ -152,12 +153,12 @@ SITE_ID = 1
 # JWT authentication will be used by dj-rest-auth
 REST_USE_JWT = True
 # cookie key called as..
-JWT_AUTH_COOKIE = 'myapp-auth'
-JWT_AUTH_REFRESH_COOKIE = 'myrefresh-token'
+JWT_AUTH_COOKIE = 'my-app-auth'
+
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=3),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'ROTATE_REFRESH_TOKENS': False,
+    'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
 }
 
