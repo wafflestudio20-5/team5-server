@@ -1,4 +1,3 @@
-import dj_rest_auth
 from allauth.account.views import ConfirmEmailView
 from django.urls import path, include, re_path
 from dj_rest_auth.registration.views import RegisterView, VerifyEmailView
