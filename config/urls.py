@@ -26,6 +26,7 @@ schema_view = get_schema_view(
         default_version='v1', # 버전
         description="프로젝트 API 문서", # 설명
         terms_of_service="https://www.google.com/policies/terms/",
+        url='http://127.0.0.1:8000/'
         # contact=openapi.Contact(email="이메일"),
         # license=openapi.License(name=""),
     ),
