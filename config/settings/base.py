@@ -15,6 +15,8 @@ import os, json
 from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+from api.middleware.jwt_cookie_middleware import MoveJWTCookieIntoTheBody, MoveJWTRefreshCookieIntoTheBody
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 ROOT_DIR = os.path.dirname(BASE_DIR)
 
@@ -77,6 +79,9 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'api.middleware.jwt_cookie_middleware.MoveJWTCookieIntoTheBody',
+    'api.middleware.jwt_cookie_middleware.MoveJWTRefreshCookieIntoTheBody'
+
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -154,6 +159,7 @@ SITE_ID = 1
 REST_USE_JWT = True
 # cookie key called as..
 JWT_AUTH_COOKIE = 'my-app-auth'
+JWT_AUTH_REFRESH_COOKIE = 'my-app-refresh-auth'
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=3),
