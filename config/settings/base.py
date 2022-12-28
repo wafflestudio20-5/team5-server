@@ -72,6 +72,8 @@ INSTALLED_APPS = [
 # depoy(DEBUG=False)일 때, static 파일 보여주는 용도
 CUSTOM_MIDDLEWARE = [
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "api.middleware.jwt_cookie_middleware.MoveJWTCookieIntoTheBody",
+    "api.middleware.jwt_cookie_middleware.MoveJWTRefreshCookieIntoTheBody"
 ]
 WHITENOISE_USE_FINDERS = True
 WHITENOISE_MANIFEST_STRICT = False
@@ -166,6 +168,7 @@ SITE_ID = 1
 REST_USE_JWT = True
 # cookie key called as..
 JWT_AUTH_COOKIE = 'my-app-auth'
+JWT_AUTH_REFRESH_COOKIE = 'my-app-refresh-auth'
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=3),
