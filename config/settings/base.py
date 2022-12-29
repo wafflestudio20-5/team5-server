@@ -41,7 +41,8 @@ ALLOWED_HOSTS = []
 
 # Application definition
 CUSTOM_APPS = [
-    'api.apps.ApiConfig'
+    'api.apps.ApiConfig',
+    'users.apps.UsersConfig'
 ]
 
 REST_FRAMEWORK_APPS = [
@@ -57,6 +58,7 @@ REST_FRAMEWORK_APPS = [
 
 OTHER_TOOL_APPS = [
     "drf_yasg",
+    "phonenumber_field"
 ]
 
 INSTALLED_APPS = [
@@ -182,11 +184,12 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_USERNAME_REQUIRED = False
-
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 LOGIN_URL = 'login'
 
@@ -205,3 +208,15 @@ EMAIL_HOST_USER = config_secret_common['EMAIL_HOST_USER']
 EMAIL_HOST_PASSWORD = config_secret_common['EMAIL_HOST_PASSWORD']
 EMAIL_USE_TLS = True # TLS 보안 방법
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+REST_AUTH_SERIALIZERS = {
+    'LOGIN_SERIALIZER': 'api.serializers.CustomLoginSerializer',
+    'USER_DETAILS_SERIALIZER': 'users.serializers.CustomUserDetailsSerializer',
+}
+
+REST_AUTH_REGISTER_SERIALIZERS = {
+    'REGISTER_SERIALIZER': 'api.serializers.CustomRegisterSerializer'
+}
+
+AUTH_USER_MODEL = 'users.CustomUser'
+
