@@ -42,7 +42,6 @@ ALLOWED_HOSTS = []
 # Application definition
 CUSTOM_APPS = [
     'api.apps.ApiConfig',
-    'users.apps.UsersConfig'
 ]
 
 REST_FRAMEWORK_APPS = [
@@ -211,12 +210,12 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 REST_AUTH_SERIALIZERS = {
     'LOGIN_SERIALIZER': 'api.serializers.CustomLoginSerializer',
-    'USER_DETAILS_SERIALIZER': 'users.serializers.CustomUserDetailsSerializer',
+    'USER_DETAILS_SERIALIZER': 'api.serializers.CustomUserDetailsSerializer',
 }
 
 REST_AUTH_REGISTER_SERIALIZERS = {
     'REGISTER_SERIALIZER': 'api.serializers.CustomRegisterSerializer'
 }
 
-AUTH_USER_MODEL = 'users.CustomUser'
+AUTH_USER_MODEL = 'api.CustomUser'
 

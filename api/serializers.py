@@ -3,7 +3,9 @@ from allauth.account.utils import setup_user_email
 from dj_rest_auth.serializers import LoginSerializer
 from dj_rest_auth.registration.serializers import RegisterSerializer
 from django.contrib.auth import authenticate, get_user_model
+from phonenumber_field.modelfields import PhoneNumberField
 from rest_framework import exceptions, serializers
+from api.models import CustomUser
 from config.settings import base
 
 
@@ -67,3 +69,17 @@ class CustomRegisterSerializer(RegisterSerializer):
         user.save()
         adapter.save_user(request, user, self)
         return user
+
+
+class CustomUserDetailsSerializer(serializers.ModelSerializer):
+    phone_number = PhoneNumberField(region="KR")
+
+    class Meta:
+        model = CustomUser
+        fields = (
+            'id',
+            'email',
+            'shoe_size',
+            'phone_number',
+        )
+        read_only_fields = ('email',)
