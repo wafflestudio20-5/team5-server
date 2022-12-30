@@ -26,8 +26,6 @@ CONFIG_SECRET_DEPLOY_FILE = os.path.join(CONFIG_SECRET_DIR, 'settings_deploy.jso
 
 config_secret_common = json.loads(open(CONFIG_SECRET_COMMON_FILE).read())
 
-
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
@@ -37,7 +35,6 @@ SECRET_KEY = config_secret_common['django']['secret_key']
 # SECURITY WARNING: don't run with debug turned on in production!
 
 ALLOWED_HOSTS = []
-
 
 # Application definition
 CUSTOM_APPS = [
@@ -50,9 +47,14 @@ REST_FRAMEWORK_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "dj_rest_auth",
     "dj_rest_auth.registration",
+]
+
+SOCIAL_LOGIN_APPS = [
     "allauth",
     "allauth.account",
-    "allauth.socialaccount"
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.naver",
+    "allauth.socialaccount.providers.google",
 ]
 
 OTHER_TOOL_APPS = [
@@ -60,14 +62,14 @@ OTHER_TOOL_APPS = [
 ]
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
-    "django.contrib.sites",
-] + REST_FRAMEWORK_APPS + OTHER_TOOL_APPS + CUSTOM_APPS
+                     "django.contrib.admin",
+                     "django.contrib.auth",
+                     "django.contrib.contenttypes",
+                     "django.contrib.sessions",
+                     "django.contrib.messages",
+                     "django.contrib.staticfiles",
+                     "django.contrib.sites",
+                 ] + REST_FRAMEWORK_APPS + SOCIAL_LOGIN_APPS + OTHER_TOOL_APPS + CUSTOM_APPS
 
 # depoy(DEBUG=False)일 때, static 파일 보여주는 용도
 CUSTOM_MIDDLEWARE = [
@@ -81,16 +83,14 @@ WHITENOISE_ALLOW_ALL_ORIGINS = True
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
-] + CUSTOM_MIDDLEWARE
-
-
+                 "django.middleware.security.SecurityMiddleware",
+                 "django.contrib.sessions.middleware.SessionMiddleware",
+                 "django.middleware.common.CommonMiddleware",
+                 "django.middleware.csrf.CsrfViewMiddleware",
+                 "django.contrib.auth.middleware.AuthenticationMiddleware",
+                 "django.contrib.messages.middleware.MessageMiddleware",
+                 "django.middleware.clickjacking.XFrameOptionsMiddleware",
+             ] + CUSTOM_MIDDLEWARE
 
 ROOT_URLCONF = "config.urls"
 
@@ -112,10 +112,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-
 
 
 # Password validation
@@ -125,11 +123,10 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", },
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator", },
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator", },
 ]
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
@@ -142,12 +139,10 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = "static/"
-
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
@@ -203,5 +198,29 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = '587'
 EMAIL_HOST_USER = config_secret_common['EMAIL_HOST_USER']
 EMAIL_HOST_PASSWORD = config_secret_common['EMAIL_HOST_PASSWORD']
-EMAIL_USE_TLS = True # TLS 보안 방법
+EMAIL_USE_TLS = True  # TLS 보안 방법
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# Provider specific settings
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        }
+    },
+    'naver': {
+        'APP': {
+            **config_secret_common['SOCIALACCOUNT_PROVIDERS']['naver'],
+            'key': ''
+        }
+    },
+}
+
+### 배포 후 url 수정하기
+# LOGIN_REDIRECT_URL = '/login_redirect'
+# ACCOUNT_LOGOUT_REDIRECT_URL = '/logout_redirect'
+###
