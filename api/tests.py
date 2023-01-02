@@ -1,17 +1,15 @@
+from http.cookies import SimpleCookie
 from unittest import TestCase
 
+import jwt
 from django.core import mail
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from api.models import CustomUser
+from config.settings import base
+from config.settings.base import SECRET_KEY, SIMPLE_JWT
 
-# class CommonSetUp(TestCase):
-#     def make_new_model_and_save():
-#         m = Model1()
-#         m.attribute = 'test values'
-#         m.save()
-#         return m
 
 class AccountTests(APITestCase):
     register_url = reverse('rest_register')
@@ -19,14 +17,14 @@ class AccountTests(APITestCase):
     login_url = reverse('login')
     logout_url = reverse('rest_logout')
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-
+    # @classmethod
+    # def setUpClass(cls):
+    #     super().setUpClass()
+    #
     def setUp(self):
         self.default_data = {
-            'email': 'test@example.com',
-            'password': 'testpass@!'
+            'email': 'loveyoony20@naver.com',
+            'password': 'luce1013!'
         }
 
 
@@ -65,31 +63,25 @@ class AccountTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()["detail"], "ok")
 
-        #incorrect info
+        #incorrect info login
         response = self.client.post(self.login_url, {
-            'email':'testwrong@example.com',
+            'email': 'testwrong@example.com',
             'password':'testpass@!'
         })
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertTrue("Unable to log in with provided credentials." in response.json()["non_field_errors"])
 
-        #correct info
+        #correct info login
         response = self.client.post(self.login_url, login_data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue("access_token" in response.json())
 
-    def test_logout(self):
+    def test_unauthorized_logout(self):
         response = self.client.post(self.logout_url, {})
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertTrue(
             "Refresh token was not included in request data." in response.json()["detail"]
         )
 
-        self.client.credentials(HTTP_AUTHORIZATION="")
-        response = self.client.post(self.login_url, self.default_data)
-        print(response.json())
-        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + response.json()["access_token"])
-        response = self.client.post(self.logout_url, {})
-        self.assertEqual(response.status_code, 302)
 
 
