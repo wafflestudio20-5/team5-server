@@ -41,7 +41,7 @@ ALLOWED_HOSTS = []
 
 # Application definition
 CUSTOM_APPS = [
-    'api.apps.ApiConfig',
+    'accounts.apps.AccountConfig',
 ]
 
 REST_FRAMEWORK_APPS = [
@@ -73,8 +73,8 @@ INSTALLED_APPS = [
 # depoy(DEBUG=False)일 때, static 파일 보여주는 용도
 CUSTOM_MIDDLEWARE = [
     "whitenoise.middleware.WhiteNoiseMiddleware",
-    "api.middleware.jwt_cookie_middleware.MoveJWTCookieIntoTheBody",
-    "api.middleware.jwt_cookie_middleware.MoveJWTRefreshCookieIntoTheBody"
+    "accounts.middleware.jwt_cookie_middleware.MoveJWTCookieIntoTheBody",
+    "accounts.middleware.jwt_cookie_middleware.MoveJWTRefreshCookieIntoTheBody"
 ]
 WHITENOISE_USE_FINDERS = True
 WHITENOISE_MANIFEST_STRICT = False
@@ -231,13 +231,13 @@ EMAIL_USE_TLS = True # TLS 보안 방법
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 REST_AUTH_SERIALIZERS = {
-    'LOGIN_SERIALIZER': 'api.serializers.CustomLoginSerializer',
-    'USER_DETAILS_SERIALIZER': 'api.serializers.CustomUserDetailsSerializer',
+    'LOGIN_SERIALIZER': 'accounts.serializers.CustomLoginSerializer',
+    'USER_DETAILS_SERIALIZER': 'accounts.serializers.CustomUserDetailsSerializer',
 }
 
 REST_AUTH_REGISTER_SERIALIZERS = {
-    'REGISTER_SERIALIZER': 'api.serializers.CustomRegisterSerializer'
+    'REGISTER_SERIALIZER': 'accounts.serializers.CustomRegisterSerializer'
 }
 
-AUTH_USER_MODEL = 'api.CustomUser'
+AUTH_USER_MODEL = 'accounts.CustomUser'
 

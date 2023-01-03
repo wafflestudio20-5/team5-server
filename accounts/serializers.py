@@ -5,7 +5,7 @@ from dj_rest_auth.registration.serializers import RegisterSerializer
 from django.contrib.auth import authenticate, get_user_model
 from phonenumber_field.modelfields import PhoneNumberField
 from rest_framework import exceptions, serializers
-from api.models import CustomUser
+from accounts.models import CustomUser
 from config.settings import base
 
 
