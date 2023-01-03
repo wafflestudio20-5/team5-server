@@ -6,7 +6,7 @@ from django.core import mail
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from api.models import CustomUser
+from accounts.models import CustomUser
 from config.settings import base
 from config.settings.base import SECRET_KEY, SIMPLE_JWT
 
