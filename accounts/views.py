@@ -5,12 +5,11 @@ from rest_framework import status
 
 from config.settings.base import config_secret_common, SIMPLE_JWT
 from .models import *
+from .serializers import CustomUserDetailsSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 
 SECRET_KEY = config_secret_common['django']['secret_key']
 ALGORITHM = SIMPLE_JWT['ALGORITHM']
-
-
-# TODO: REFRESH TOKEN 생성
 
 
 def google_auth(request):
@@ -37,11 +36,28 @@ def _auth(user_req):
 
     try:
         user = CustomUser.objects.get(email=email)
-        jwt_token = jwt.encode({'id': user.id}, SECRET_KEY, ALGORITHM)
-        return JsonResponse({'token': jwt_token, 'exist': True})
+        tokens = _generate_tokens(user)
+        return JsonResponse({
+            **tokens,
+            'user': CustomUserDetailsSerializer(user),
+            'exists': True
+        })
 
     except CustomUser.DoesNotExist:
         CustomUser(email=email).save()
         user = CustomUser.objects.get(email=email)
-        jwt_token = jwt.encode({'id': user.id}, SECRET_KEY, ALGORITHM)
-        return JsonResponse({'token': jwt_token, 'exist': False})
+        tokens = _generate_tokens(user)
+        return JsonResponse({
+            **tokens,
+            'user': CustomUserDetailsSerializer(user),
+            'exists': True
+        })
+
+
+def _generate_tokens(user):
+    refresh = RefreshToken.for_user(user)
+
+    return {
+        'access_token': str(refresh.access_token),
+        'refresh_token': str(refresh),
+    }
