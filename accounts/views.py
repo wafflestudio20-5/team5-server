@@ -3,13 +3,9 @@ from django.contrib.auth.models import update_last_login
 from django.http import JsonResponse
 from rest_framework import status
 
-from config.settings.base import config_secret_common, SIMPLE_JWT
 from .models import *
 from .serializers import CustomUserDetailsSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
-
-SECRET_KEY = config_secret_common['django']['secret_key']
-ALGORITHM = SIMPLE_JWT['ALGORITHM']
 
 
 def google_auth(request):
