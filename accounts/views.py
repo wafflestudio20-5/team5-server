@@ -1,4 +1,5 @@
 import requests
+from django.contrib.auth.models import update_last_login
 from django.http import JsonResponse
 from rest_framework import status
 
@@ -42,6 +43,7 @@ def _auth(email):
     try:
         user = CustomUser.objects.get(email=email)
         tokens = _generate_tokens(user)
+        _login(user)
         return JsonResponse({
             **tokens,
             'user': CustomUserDetailsSerializer(user).data,
@@ -52,11 +54,16 @@ def _auth(email):
         CustomUser(email=email).save()
         user = CustomUser.objects.get(email=email)
         tokens = _generate_tokens(user)
+        _login(user)
         return JsonResponse({
             **tokens,
             'user': CustomUserDetailsSerializer(user).data,
             'exists': False
         })
+
+
+def _login(user):
+    update_last_login(None, user)
 
 
 def _generate_tokens(user):
