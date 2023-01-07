@@ -1,13 +1,16 @@
 import requests
 from django.contrib.auth.models import update_last_login
 from django.http import JsonResponse
-from rest_framework import status
+from rest_framework import status, permissions
+from rest_framework.decorators import api_view, permission_classes
 
 from .models import *
 from .serializers import CustomUserDetailsSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
 
+@api_view(['GET'])
+@permission_classes((permissions.AllowAny,))
 def google_auth(request):
     access_token = request.GET.get('token', None)
     user_req = requests.get(f"https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={access_token}")
@@ -21,6 +24,8 @@ def google_auth(request):
     return _auth(email)
 
 
+@api_view(['GET'])
+@permission_classes((permissions.AllowAny,))
 def naver_auth(request):
     access_token = request.GET.get('token', None)
     user_req = requests.get(url="https://openapi.naver.com/v1/nid/me",
