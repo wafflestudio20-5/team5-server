@@ -26,8 +26,6 @@ CONFIG_SECRET_DEPLOY_FILE = os.path.join(CONFIG_SECRET_DIR, 'settings_deploy.jso
 
 config_secret_common = json.loads(open(CONFIG_SECRET_COMMON_FILE).read())
 
-
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
@@ -37,7 +35,6 @@ SECRET_KEY = config_secret_common['django']['secret_key']
 # SECURITY WARNING: don't run with debug turned on in production!
 
 ALLOWED_HOSTS = []
-
 
 # Application definition
 CUSTOM_APPS = [
@@ -53,23 +50,24 @@ REST_FRAMEWORK_APPS = [
     "dj_rest_auth.registration",
     "allauth",
     "allauth.account",
-    "allauth.socialaccount"
+    "allauth.socialaccount",
 ]
 
 OTHER_TOOL_APPS = [
     "drf_yasg",
-    "phonenumber_field"
+    "phonenumber_field",
+    "corsheaders",
 ]
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
-    "django.contrib.sites",
-] + REST_FRAMEWORK_APPS + OTHER_TOOL_APPS + CUSTOM_APPS
+                     "django.contrib.admin",
+                     "django.contrib.auth",
+                     "django.contrib.contenttypes",
+                     "django.contrib.sessions",
+                     "django.contrib.messages",
+                     "django.contrib.staticfiles",
+                     "django.contrib.sites",
+                 ] + REST_FRAMEWORK_APPS + OTHER_TOOL_APPS + CUSTOM_APPS
 
 # depoy(DEBUG=False)일 때, static 파일 보여주는 용도
 CUSTOM_MIDDLEWARE = [
@@ -90,9 +88,14 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
 ] + CUSTOM_MIDDLEWARE
 
+CORS_ORIGIN_WHITELIST = [
+    'http://127.0.0.1:3000',
+    'http://localhost:3000']
 
+CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = "config.urls"
 
@@ -114,10 +117,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-
 
 
 # Password validation
@@ -127,11 +128,10 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", },
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator", },
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator", },
 ]
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
@@ -144,12 +144,10 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = "static/"
-
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
@@ -197,8 +195,8 @@ SIMPLE_JWT = {
     'JTI_CLAIM': 'jti',
 
     'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
-    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=30),   #update here for acess token
-    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1), # update here for refresh token
+    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=30),  # update here for acess token
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),  # update here for refresh token
 }
 
 AUTHENTICATION_BACKENDS = [
@@ -228,7 +226,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = '587'
 EMAIL_HOST_USER = config_secret_common['EMAIL_HOST_USER']
 EMAIL_HOST_PASSWORD = config_secret_common['EMAIL_HOST_PASSWORD']
-EMAIL_USE_TLS = True # TLS 보안 방법
+EMAIL_USE_TLS = True  # TLS 보안 방법
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 REST_AUTH_SERIALIZERS = {
@@ -241,4 +239,3 @@ REST_AUTH_REGISTER_SERIALIZERS = {
 }
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
-
