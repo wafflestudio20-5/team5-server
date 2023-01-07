@@ -39,6 +39,7 @@ ALLOWED_HOSTS = []
 # Application definition
 CUSTOM_APPS = [
     'accounts.apps.AccountConfig',
+    'shop.apps.ShopConfig'
 ]
 
 REST_FRAMEWORK_APPS = [
@@ -214,7 +215,7 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
-LOGIN_URL = 'login'
+LOGIN_URL = 'https://d2fvyynal80kjq.cloudfront.net/join/email_sent'
 
 # URL_FRONT = 'http://****'  # 공개적인 웹페이지가 있다면 등록
 
