@@ -34,11 +34,8 @@ class Product(models.Model):
     info = models.ForeignKey(ProductInfo, on_delete=models.CASCADE)
     size = models.CharField(choices=SHOE_SIZE_CHOICES + CLOTHES_SIZE_CHOICES, max_length=5, default='ALL')
     wishes = models.ManyToManyField(through='Wish', to=get_user_model())
-<<<<<<< HEAD
     purchase_candidates = models.ManyToManyField(through='PurchaseBid', to=get_user_model())
     sales_candidates = models.ManyToManyField(through='SalesBid', to=get_user_model())
-=======
->>>>>>> dbd7018c9e9ad3c9ffe2213f0eb9d4455bb94aaa
     purchase_price = models.IntegerField(blank=True, null=True, default=None)
     sales_price = models.IntegerField(blank=True, null=True, default=None)
 
@@ -69,10 +66,7 @@ class PurchaseBid(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     price = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
-<<<<<<< HEAD
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-=======
->>>>>>> dbd7018c9e9ad3c9ffe2213f0eb9d4455bb94aaa
 
     class Meta:
         ordering = ['-created_at']
@@ -87,10 +81,7 @@ class SalesBid(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     price = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
-<<<<<<< HEAD
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-=======
->>>>>>> dbd7018c9e9ad3c9ffe2213f0eb9d4455bb94aaa
 
     class Meta:
         ordering = ['-created_at']
