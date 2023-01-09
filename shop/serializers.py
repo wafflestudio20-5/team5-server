@@ -26,7 +26,11 @@ class ProductListSerializer(serializers.ModelSerializer):
         fields = ['id', 'size', 'purchase_price', 'sales_price', 'wishes', 'info']
 
     def validate_size(self, size):
+<<<<<<< HEAD
         if Product.objects.filter(info=self.initial_data.get('info'), size=size).exists():
+=======
+        if Product.objects.filter(info=self.initial_data.get('info'), size=size).exists() > 0:
+>>>>>>> dbd7018c9e9ad3c9ffe2213f0eb9d4455bb94aaa
             raise serializers.ValidationError({"size": "This size already exists"})
         return size
 

@@ -1,7 +1,10 @@
 from rest_framework import permissions
 
+<<<<<<< HEAD
 from shop.models import Wish, Product
 
+=======
+>>>>>>> dbd7018c9e9ad3c9ffe2213f0eb9d4455bb94aaa
 
 class IsAdminUserOrReadOnly(permissions.BasePermission):
     message = {'Error': 'If you are not a superuser, only reading is allowed'}
@@ -16,6 +19,7 @@ class IsAdminUserOrReadOnly(permissions.BasePermission):
 class IsAuthenticatedOrReadInfo(permissions.BasePermission):
     message = {'Error': 'If you are not authenticated, you cannot see other sizes'}
 
+<<<<<<< HEAD
     def has_permission(self, request, view):
         if view.kwargs['size'] == 'ALL':
             if request.user.is_authenticated or (request.method in permissions.SAFE_METHODS):
@@ -27,4 +31,10 @@ class IsAuthenticatedOrReadInfo(permissions.BasePermission):
                 return True
             else:
                 return False
+=======
+    def has_object_permission(self, request, view, obj):
+        if obj.size != 'ALL' and not request.user.is_authenticated:
+            return False
+        return True
+>>>>>>> dbd7018c9e9ad3c9ffe2213f0eb9d4455bb94aaa
 
