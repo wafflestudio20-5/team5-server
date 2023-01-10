@@ -16,7 +16,8 @@ class ProductTagSerializer(serializers.ModelSerializer):
         res = super().to_representation(instance)
         res.setdefault('brand_name', instance.brand.name)
         res.setdefault('price', instance.product_set.order_by('sales_price')[0].sales_price)
-        res.setdefault('total_wishes', instance.product_set.aggregate(Count('wishes'))['wishes__count'])
+        res.setdefault('total_wishes', instance.product_set.all().aggregate(total_wishes=Count('wishes')))
+        res.setdefault('total_shares', instance.share_set.all().count())
         return res
 
 

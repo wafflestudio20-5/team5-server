@@ -2,7 +2,7 @@ import uuid
 from pathlib import Path
 from functools import partial
 from django.db import models
-from ..accounts.models import CustomUser
+from accounts.models import CustomUser
 
 
 def media_directory_path(filename, forder_name):
@@ -15,12 +15,10 @@ class Profile(models.Model):
     profile_name = models.CharField(max_length=15, verbose_name="profile_name")
     img = models.ImageField(upload_to=partial(media_directory_path, forder_name='profile'))
     
-        
-
 
 class Post(models.Model):
     writer = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name='writer')
-    content = models.CharField()
+    content = models.CharField(max_length=200)
     created_at = models.DateTimeField(auto_now_add=True)
     
     
@@ -30,5 +28,5 @@ class PostImage(models.Model):
     img_ratio = models.FloatField()
 
 
-class PostTag(models.)
+# class PostTag(models.)
     

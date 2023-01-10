@@ -1,9 +1,12 @@
 from django.http import JsonResponse
-from rest_framework import generics
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework import generics, mixins
+from rest_framework.generics import GenericAPIView
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.views import APIView
+
+from accounts.models import CustomUser
 from shop.models import ProductInfo, Product, Wish
-from shop.permissions import IsAdminUserOrReadOnly, IsAuthenticatedOrReadInfo
+from shop.permissions import IsAdminUserOrReadOnly
 from shop.serializers import ProductDetailSerializer, ProductTagSerializer, ProductListSerializer
 
 
@@ -34,7 +37,7 @@ class ProductListCreateApiView(generics.ListCreateAPIView):
 # shows specific product and allows superuser to update or destroy the product
 class ProductRetrieveUpdateDestroyApiView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProductDetailSerializer
-    permission_classes = [IsAuthenticatedOrReadInfo]
+    permission_classes = [IsAdminUserOrReadOnly]
     lookup_field = 'size'
 
     def get_queryset(self):
@@ -45,19 +48,24 @@ class ProductRetrieveUpdateDestroyApiView(generics.RetrieveUpdateDestroyAPIView)
 class WishView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request):
-        wishlist_obj, created = Wish.objects.get_or_create(product=self.kwargs['pk'], user=request.user.id)
+    def post(self, request, pk):
+        wishlist_obj, created = Wish.objects.get_or_create(product=Product.objects.get(pk=pk),
+                                                           user=request.user)
         if not created:
             wishlist_obj.delete()
             return JsonResponse({"message": "WISHLIST_DELETE_SUCCESS"}, status=200)
         return JsonResponse({"message": "WISHLIST_CREATE_SUCCESS"}, status=201)
 
 
-class SizeView(APIView):
-    permission_classes = [IsAuthenticated]
+# class SizeView(generics.RetrieveAPIView):
+#     permission_classes = [IsAuthenticated]
+#     queryset = ProductInfo.objects.all()
 
-    def get_queryset(self):
-        Product.objects.filter(info=self.kwargs['pk'])
+
+
+
+
+
 
 
 

@@ -1,6 +1,14 @@
 from django.db import models
+
+from styles.models import Post
 from .utils import rename_imagefile_to_uuid
 from django.contrib.auth import get_user_model
+
+DELIVERY_CHOICES = [('immediate', 'immediate'), ('brand', 'brand')]
+SHOE_SIZE_CHOICES = [('ALL', 'ALL')] + [('{0}'.format(70 + 5 * i), '{0}'.format(70 + 5 * i)) for i in range(53)]
+CLOTHES_SIZE_CHOICES = [('ALL', 'ALL'), ('XXS', 'XXS'), ('XS', 'XS'), ('S', 'S'), ('M', 'M'), ('L', 'L'), ('XL', 'XL'), ('XXL', 'XXL'),
+                        ('XXXL', 'XXXL')] + \
+                       [('{0}'.format(28 + i), '{0}'.format(28 + i)) for i in range(9)]
 
 
 class Brand(models.Model):
@@ -10,11 +18,34 @@ class Brand(models.Model):
         return self.name
 
 
-DELIVERY_CHOICES = [('immediate', 'immediate'), ('brand', 'brand')]
-SHOE_SIZE_CHOICES = [('ALL', 'ALL')] + [('{0}'.format(70 + 5 * i), '{0}'.format(70 + 5 * i)) for i in range(53)]
-CLOTHES_SIZE_CHOICES = [('ALL', 'ALL'), ('XXS', 'XXS'), ('XS', 'XS'), ('S', 'S'), ('M', 'M'), ('L', 'L'), ('XL', 'XL'), ('XXL', 'XXL'),
-                        ('XXXL', 'XXXL')] + \
-                       [('{0}'.format(28 + i), '{0}'.format(28 + i)) for i in range(9)]
+class Store(models.Model):
+    name = models.CharField(max_length=30)
+
+    def __str__(self):
+        return self.name
+
+
+class Order(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class TransOrder(Order):
+    buyer = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True, related_name='purchase_orders')
+    seller = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True, related_name='sales_orders')
+    product = models.ForeignKey('Product', on_delete=models.SET_NULL, null=True)
+    # added below in case the product is deleted
+    price = models.IntegerField()
+    product_engname = models.CharField(max_length=100)
+    size = models.CharField(choices=SHOE_SIZE_CHOICES + CLOTHES_SIZE_CHOICES, max_length=5, default='ALL')
+
+
+class StoreOrder(Order):
+    store = models.ForeignKey(Store, on_delete=models.SET_NULL, null=True)
+    buyer = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True)
+    product = models.ForeignKey('Product', on_delete=models.SET_NULL, null=True)
+    price = models.IntegerField()
+    product_engname = models.CharField(max_length=100)
+    size = models.CharField(choices=SHOE_SIZE_CHOICES + CLOTHES_SIZE_CHOICES, max_length=5, default='ALL')
 
 
 class ProductInfo(models.Model):
@@ -34,8 +65,8 @@ class Product(models.Model):
     info = models.ForeignKey(ProductInfo, on_delete=models.CASCADE)
     size = models.CharField(choices=SHOE_SIZE_CHOICES + CLOTHES_SIZE_CHOICES, max_length=5, default='ALL')
     wishes = models.ManyToManyField(through='Wish', to=get_user_model())
-    purchase_candidates = models.ManyToManyField(through='PurchaseBid', to=get_user_model())
-    sales_candidates = models.ManyToManyField(through='SalesBid', to=get_user_model())
+    # purchase_candidates = models.ManyToManyField(through='PurchaseBid', to=get_user_model(), related_name='')
+    # sales_candidates = models.ManyToManyField(through='SalesBid', to=get_user_model())
     purchase_price = models.IntegerField(blank=True, null=True, default=None)
     sales_price = models.IntegerField(blank=True, null=True, default=None)
 
@@ -52,9 +83,9 @@ class Wish(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
 
 
-# manytomanyfield
-# class Share(models.Model):
-#     product = models.ForeignKey(ProductInfo)
+class Share(models.Model):
+    product = models.ForeignKey(ProductInfo, on_delete=models.CASCADE)
+    style_post = models.ForeignKey(Post, on_delete=models.CASCADE)
 
 
 class ProductImage(models.Model):
