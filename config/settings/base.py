@@ -40,7 +40,6 @@ ALLOWED_HOSTS = []
 CUSTOM_APPS = [
     'accounts.apps.AccountConfig',
     'shop.apps.ShopConfig',
-    'styles.apps.StylesConfig'
 ]
 
 REST_FRAMEWORK_APPS = [
