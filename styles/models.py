@@ -12,9 +12,10 @@ def media_directory_path(filename, forder_name):
 class Profile(models.Model):
     user = models.OneToOneField(CustomUser, primary_key=True, on_delete=models.CASCADE, verbose_name='user')
     user_name = models.CharField(max_length=15, verbose_name="user_name")
-    profile_name = models.CharField(max_length=15, verbose_name="profile_name", null=True)
+    profile_name = models.CharField(max_length=15, verbose_name="profile_name")
     img = models.ImageField(upload_to=partial(media_directory_path, forder_name='profile'), blank=True, null=True)
-    follows = models.ManyToManyField('self', through='Follow', related_name='followed_by', symmetrical=False, blank=True)
+    follows = models.ManyToManyField('self', through='Follow', related_name='followed_by', symmetrical=False,
+                                     blank=True)
 
 
 class Follow(models.Model):

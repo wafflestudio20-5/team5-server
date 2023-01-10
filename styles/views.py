@@ -2,7 +2,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from styles.models import Profile, Follow
 from styles.serializers import ProfileSerializer
@@ -13,6 +13,12 @@ class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = [IsProfileOwnerOrReadOnly]
+
+    # def get_permissions(self):
+    #     if self.action in ('list', 'retrieve'):
+    #         return [IsAdminUser]
+    #
+    #     super().get_permissions()
 
 
 @api_view(['PATCH'])

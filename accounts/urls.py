@@ -1,7 +1,7 @@
 from django.urls import path, include
 from dj_rest_auth.registration.views import VerifyEmailView, ConfirmEmailView
 from dj_rest_auth.views import LoginView
-from .views import google_auth, naver_auth
+from accounts.views import google_auth, naver_auth
 
 urlpatterns = [
     path('registration/account-confirm-email/<str:key>/', ConfirmEmailView.as_view()),
