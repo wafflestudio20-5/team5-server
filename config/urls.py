@@ -41,10 +41,13 @@ swagger_ulrpatterns = [
 ]
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
     path('styles/', include('styles.urls')),
+<<<<<<< HEAD
     path('shop/', include('shop.urls')),
+=======
+>>>>>>> origin/develop
 ] + swagger_ulrpatterns
 
 

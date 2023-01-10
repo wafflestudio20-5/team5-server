@@ -4,8 +4,8 @@ from django.http import JsonResponse
 from rest_framework import status, permissions
 from rest_framework.decorators import api_view, permission_classes
 
-from .models import *
-from .serializers import CustomUserDetailsSerializer
+from accounts.models import CustomUser
+from accounts.serializers import CustomUserDetailsSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
 
