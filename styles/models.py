@@ -6,12 +6,6 @@ from accounts.models import CustomUser
 
 
 def media_directory_path(filename, forder_name):
-<<<<<<< HEAD
-    return f'{forder_name}/{str(uuid.uuid4())+Path(filename).suffix}'
-    
-
-    
-=======
     return f'{forder_name}/{str(uuid.uuid4()) + Path(filename).suffix}'
 
 
@@ -41,5 +35,4 @@ class PostImage(models.Model):
     img = models.ImageField(upload_to='post/%Y/%m/%d')
     img_ratio = models.FloatField()
 
-# class PostTag(models.)
->>>>>>> origin/develop
+
