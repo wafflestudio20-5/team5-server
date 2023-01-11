@@ -1,39 +1,27 @@
 from django.http import JsonResponse
 from rest_framework import generics, viewsets
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.views import APIView
-from shop.models import ProductInfo, Product, Wish, Brand, TransProduct, StoreProduct, TransProductInfo, \
-    StoreProductInfo
+from shop.models import ProductInfo, Product, Wish, Brand, TransProduct, StoreProduct
 from shop.permissions import IsAdminUserOrReadOnly
 from shop.serializers import BrandSerializer, \
     TransProductDetailSerializer, StoreProductDetailSerializer, TransProductListSerializer, StoreProductListSerializer, \
-    TransProductInfoSerializer, StoreProductInfoSerializer
+    TransSizeWishSerializer, StoreSizeWishSerializer, ProductInfoSerializer
 
 
 # shows specific productinfo tag. superuser can update or destroy this product info.
-class TransProductInfoRetrieveUpdateDestroyApiView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = TransProductInfoSerializer
+class ProductInfoRetrieveUpdateDestroyApiView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = ProductInfoSerializer
     permission_classes = [IsAdminUserOrReadOnly]
-    queryset = TransProductInfo.objects.all()
-
-
-class StoreProductInfoRetrieveUpdateDestroyApiView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = StoreProductInfoSerializer
-    permission_classes = [IsAdminUserOrReadOnly]
-    queryset = StoreProductInfo.objects.all()
+    queryset = ProductInfo.objects.all()
 
 
 # shows list of productinfos.. can create new productinfo
-class TransProductInfoListCreateApiView(generics.ListCreateAPIView):
-    serializer_class = TransProductInfoSerializer
+class ProductInfoListCreateApiView(generics.ListCreateAPIView):
+    serializer_class = ProductInfoSerializer
     permission_classes = [IsAdminUserOrReadOnly]
-    queryset = TransProductInfo.objects.all()
-
-
-class StoreProductInfoListCreateApiView(generics.ListCreateAPIView):
-    serializer_class = StoreProductInfoSerializer
-    permission_classes = [IsAdminUserOrReadOnly]
-    queryset = StoreProductInfo.objects.all()
+    queryset = ProductInfo.objects.all()
 
 
 # shows list of products according to productinfo.. can create new product for productinfo
@@ -76,7 +64,7 @@ class StoreProductRetrieveUpdateDestroyApiView(generics.RetrieveUpdateDestroyAPI
         return StoreProduct.objects.filter(info=info).select_related('info').prefetch_related('wishes')
 
 
-class WishView(APIView):
+class WishCheckView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
@@ -88,22 +76,21 @@ class WishView(APIView):
         return JsonResponse({"message": "WISHLIST_CREATE_SUCCESS"}, status=201)
 
 
-class TransSizeView(generics.ListAPIView):
-    serializer_class = TransProductListSerializer
+class SizeWishView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        info = self.kwargs['info']
-        return TransProduct.objects.filter(info=info)
+        productinfo = get_object_or_404(ProductInfo, pk=self.kwargs['info'])
+        if productinfo.delivery_tag == 'immediate':
+            return TransProduct.objects.filter(info=self.kwargs['info'])
+        elif productinfo.delivery_tag == 'brand':
+            return StoreProduct.objects.filter(info=self.kwargs['info'])
 
-
-class StoreSizeView(generics.ListAPIView):
-    serializer_class = StoreProductListSerializer
-    permission_classes = [AllowAny]
-
-    def get_queryset(self):
-        info = self.kwargs['info']
-        return StoreProduct.objects.filter(info=info)
+    def get_serializer_class(self):
+        productinfo = get_object_or_404(ProductInfo, pk=self.kwargs['info'])
+        if productinfo.delivery_tag == 'immediate':
+            return TransSizeWishSerializer
+        return StoreSizeWishSerializer
 
 
 class BrandViewSet(viewsets.ModelViewSet):

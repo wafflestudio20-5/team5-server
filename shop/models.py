@@ -47,17 +47,7 @@ class ProductInfo(models.Model):
     kor_name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     shares = models.ManyToManyField(through='Share', to=Post)
-
-    def __str__(self):
-        return self.eng_name[:10]
-
-
-class TransProductInfo(ProductInfo):
-    delivery_tag = models.CharField(choices=DELIVERY_CHOICES[:1], max_length=10)
-
-
-class StoreProductInfo(ProductInfo):
-    delivery_tag = models.CharField(choices=DELIVERY_CHOICES[1:], max_length=10)
+    delivery_tag = models.CharField(choices=DELIVERY_CHOICES, blank=False, max_length=12)
 
 
 class Product(models.Model):
@@ -66,9 +56,9 @@ class Product(models.Model):
 
 
 class TransProduct(Product):
-    info = models.ForeignKey(TransProductInfo, on_delete=models.CASCADE)
     purchase_price = models.IntegerField(blank=True, null=True, default=None)
     sales_price = models.IntegerField(blank=True, null=True, default=None)
+    info = models.ForeignKey(ProductInfo, on_delete=models.CASCADE)
 
     class Meta:
         ordering = ['info']
@@ -78,8 +68,8 @@ class TransProduct(Product):
 
 
 class StoreProduct(Product):
-    info = models.ForeignKey(StoreProductInfo, on_delete=models.CASCADE)
-    price = models.IntegerField()
+    sales_price = models.IntegerField()
+    info = models.ForeignKey(ProductInfo, on_delete=models.CASCADE)
 
     class Meta:
         ordering = ['info']

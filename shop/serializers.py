@@ -1,49 +1,28 @@
 from django.db.models import Count
 from rest_framework import serializers
 import shop
-from shop.models import ProductInfo, Product, Brand, Wish, TransProduct, StoreProduct, TransProductInfo, \
-    StoreProductInfo
+from shop.models import ProductInfo, Product, Brand, Wish, TransProduct, StoreProduct
 
 
-class TransProductInfoSerializer(serializers.ModelSerializer):
+class ProductInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = TransProductInfo
-        fields = ['id', 'brand', 'eng_name', 'kor_name']
+        model = ProductInfo
+        fields = ['id', 'brand', 'eng_name', 'kor_name', 'delivery_tag']
 
     def to_representation(self, instance):
         res = super().to_representation(instance)
         res.setdefault('brand_name', instance.brand.name)
+        if instance.delivery_tag == "immediate":
+            productset = instance.transproduct_set.all()
+        else:
+            productset = instance.storeproduct_set.all()
         try:
-            res.setdefault('price', instance.transproduct_set.all().order_by('sales_price')[0].sales_price)
+            res.setdefault('price', productset.order_by('sales_price')[0].sales_price)
         except:
             res.setdefault('price', None)
         try:
-            res.setdefault('total_wishes', instance.transproduct_set.all().aggregate(Count('wishes'))['wishes__count'])
-        except:
-            res.setdefault('total_wishes', 0)
-        try:
-            res.setdefault('total_shares', instance.share_set.all().count())
-        except:
-            res.setdefault('total_shares', 0)
-        return res
-
-
-class StoreProductInfoSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = StoreProductInfo
-        fields = ['id', 'brand', 'eng_name', 'kor_name']
-
-    def to_representation(self, instance):
-        res = super().to_representation(instance)
-        res.setdefault('brand_name', instance.brand.name)
-        try:
-            res.setdefault('price', instance.storeproduct_set.all().order_by('sales_price')[0].sales_price)
-        except:
-            res.setdefault('price', None)
-        try:
-            res.setdefault('total_wishes', instance.storeproduct_set.all().aggregate(Count('wishes'))['wishes__count'])
+            res.setdefault('total_wishes', productset.aggregate(Count('wishes'))['wishes__count'])
         except:
             res.setdefault('total_wishes', 0)
         try:
@@ -66,7 +45,7 @@ class TransProductListSerializer(serializers.ModelSerializer):
         return size
 
     def create(self, validated_data):
-        validated_data['info'] = TransProductInfo.objects.get(id=self.context['view'].kwargs['info'])
+        validated_data['info'] = ProductInfo.objects.get(id=self.context['view'].kwargs['info'])
         instance = super().create(validated_data)
         return instance
 
@@ -76,7 +55,7 @@ class StoreProductListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StoreProduct
-        fields = ['id', 'size', 'price']
+        fields = ['id', 'size', 'sales_price']
 
     def validate_size(self, size):
         if StoreProduct.objects.filter(info=self.context['view'].kwargs['info'], size=size).exists():
@@ -84,13 +63,13 @@ class StoreProductListSerializer(serializers.ModelSerializer):
         return size
 
     def create(self, validated_data):
-        validated_data['info'] = StoreProductInfo.objects.get(id=self.context['view'].kwargs['info'])
+        validated_data['info'] = ProductInfo.objects.get(id=self.context['view'].kwargs['info'])
         instance = super().create(validated_data)
         return instance
 
 
 class TransProductDetailSerializer(serializers.ModelSerializer):
-    info = TransProductInfoSerializer(read_only=True)
+    info = ProductInfoSerializer(read_only=True)
     size = serializers.ChoiceField(choices=shop.models.SHOE_SIZE_CHOICES+shop.models.CLOTHES_SIZE_CHOICES)
 
     class Meta:
@@ -100,11 +79,9 @@ class TransProductDetailSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         res = super().to_representation(instance)
         user = self.context['request'].user
-        wishcheck=True
-        if user.is_anonymous:
-            wishcheck=False
-        elif not Wish.objects.filter(user=user, product=instance).exists():
-            wishcheck=False
+        wishcheck=False
+        if Wish.objects.filter(user=user, product=instance).exists():
+            wishcheck = True
         res.setdefault('user_wishcheck', wishcheck)
         return res
 
@@ -115,21 +92,19 @@ class TransProductDetailSerializer(serializers.ModelSerializer):
 
 
 class StoreProductDetailSerializer(serializers.ModelSerializer):
-    info = StoreProductInfoSerializer(read_only=True)
+    info = ProductInfoSerializer(read_only=True)
     size = serializers.ChoiceField(choices=shop.models.SHOE_SIZE_CHOICES+shop.models.CLOTHES_SIZE_CHOICES)
 
     class Meta:
         model = StoreProduct
-        fields = ['id', 'size', 'price', 'info']
+        fields = ['id', 'size', 'sales_price', 'info']
 
     def to_representation(self, instance):
         res = super().to_representation(instance)
         user = self.context['request'].user
-        wishcheck=True
-        if user.is_anonymous:
-            wishcheck=False
-        elif not Wish.objects.filter(user=user, product=instance).exists():
-            wishcheck=False
+        wishcheck=False
+        if Wish.objects.filter(user=user, product=instance).exists():
+            wishcheck = True
         res.setdefault('user_wishcheck', wishcheck)
         return res
 
@@ -142,5 +117,35 @@ class StoreProductDetailSerializer(serializers.ModelSerializer):
 class BrandSerializer(serializers.ModelSerializer):
     class Meta:
         model = Brand
-        fields = ['name']
+        fields = ['id', 'name']
 
+
+class TransSizeWishSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = TransProduct
+        fields = ['id', 'size', 'sales_price']
+
+    def to_representation(self, instance):
+        res = super().to_representation(instance)
+        user = self.context['request'].user
+        wishcheck=False
+        if Wish.objects.filter(user=user, product=instance).exists():
+            wishcheck = True
+        res.setdefault('user_wishcheck', wishcheck)
+        return res
+
+
+class StoreSizeWishSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StoreProduct
+        fields = ['id', 'size', 'sales_price']
+
+    def to_representation(self, instance):
+        res = super().to_representation(instance)
+        user = self.context['request'].user
+        wishcheck = False
+        if Wish.objects.filter(user=user, product=instance).exists():
+            wishcheck = True
+        res.setdefault('user_wishcheck', wishcheck)
+        return res
