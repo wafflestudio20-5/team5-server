@@ -1,9 +1,8 @@
 from django.contrib import admin
-from shop.models import Product, Brand, ProductInfo, ProductImage, PurchaseBid, SalesBid, Wish, Store, TransOrder, \
+from shop.models import Product, Brand, ProductInfo, ProductImage, PurchaseBid, SalesBid, Wish, TransOrder, \
     StoreOrder
 
 admin.site.register(Brand)
-admin.site.register(Store)
 admin.site.register(ProductInfo)
 admin.site.register(Product)
 admin.site.register(Wish)

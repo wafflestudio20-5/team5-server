@@ -18,13 +18,6 @@ class Brand(models.Model):
         return self.name
 
 
-class Store(models.Model):
-    name = models.CharField(max_length=30)
-
-    def __str__(self):
-        return self.name
-
-
 class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -40,7 +33,7 @@ class TransOrder(Order):
 
 
 class StoreOrder(Order):
-    store = models.ForeignKey(Store, on_delete=models.SET_NULL, null=True)
+    store = models.ForeignKey(Brand, on_delete=models.SET_NULL, null=True)
     buyer = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True)
     product = models.ForeignKey('Product', on_delete=models.SET_NULL, null=True)
     price = models.IntegerField()
@@ -53,20 +46,27 @@ class ProductInfo(models.Model):
     eng_name = models.CharField(max_length=100)
     kor_name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
-    delivery_tag = models.CharField(choices=DELIVERY_CHOICES, max_length=10)
-
-    # shares = models.ManyToManyField(through='Share', to=)
+    shares = models.ManyToManyField(through='Share', to=Post)
 
     def __str__(self):
         return self.eng_name[:10]
 
 
+class TransProductInfo(ProductInfo):
+    delivery_tag = models.CharField(choices=DELIVERY_CHOICES[:1], max_length=10)
+
+
+class StoreProductInfo(ProductInfo):
+    delivery_tag = models.CharField(choices=DELIVERY_CHOICES[1:], max_length=10)
+
+
 class Product(models.Model):
-    info = models.ForeignKey(ProductInfo, on_delete=models.CASCADE)
     size = models.CharField(choices=SHOE_SIZE_CHOICES + CLOTHES_SIZE_CHOICES, max_length=5, default='ALL')
     wishes = models.ManyToManyField(through='Wish', to=get_user_model())
-    # purchase_candidates = models.ManyToManyField(through='PurchaseBid', to=get_user_model(), related_name='')
-    # sales_candidates = models.ManyToManyField(through='SalesBid', to=get_user_model())
+
+
+class TransProduct(Product):
+    info = models.ForeignKey(TransProductInfo, on_delete=models.CASCADE)
     purchase_price = models.IntegerField(blank=True, null=True, default=None)
     sales_price = models.IntegerField(blank=True, null=True, default=None)
 
@@ -74,7 +74,18 @@ class Product(models.Model):
         ordering = ['info']
 
     def __str__(self):
-        return self.info.eng_name[:10]+"_"+self.size
+        return self.info.eng_name[:10]+"_"+self.size+"_"+"trans"
+
+
+class StoreProduct(Product):
+    info = models.ForeignKey(StoreProductInfo, on_delete=models.CASCADE)
+    price = models.IntegerField()
+
+    class Meta:
+        ordering = ['info']
+
+    def __str__(self):
+        return self.info.eng_name[:10]+"_"+self.size+"_"+"store"
 
 
 # manytomanyfield
@@ -94,7 +105,7 @@ class ProductImage(models.Model):
 
 
 class PurchaseBid(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(TransProduct, on_delete=models.CASCADE)
     price = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
@@ -109,7 +120,7 @@ class PurchaseBid(models.Model):
 
 
 class SalesBid(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(TransProduct, on_delete=models.CASCADE)
     price = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
