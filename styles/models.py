@@ -35,4 +35,4 @@ class PostImage(models.Model):
     img = models.ImageField(upload_to='post/%Y/%m/%d')
     img_ratio = models.FloatField()
 
-# class PostTag(models.)
+

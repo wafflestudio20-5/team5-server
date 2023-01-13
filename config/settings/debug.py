@@ -8,3 +8,6 @@ DATABASES = config_secret_debug['django']['database']
 
 # WSGI application
 WSGI_APPLICATION = 'config.wsgi.debug.application'
+
+
+AWS_STORAGE_BUCKET_NAME = 'kream-waffle-debug-bucket'
