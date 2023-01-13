@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.dispatch import receiver
 from styles.models import Post
 from .utils import rename_imagefile_to_uuid
 from django.contrib.auth import get_user_model
@@ -92,6 +92,11 @@ class Share(models.Model):
 class ProductImage(models.Model):
     product = models.ForeignKey(ProductInfo, on_delete=models.CASCADE)
     image = models.ImageField(upload_to=rename_imagefile_to_uuid)
+
+
+@receiver(models.signals.post_delete, sender=ProductImage)
+def remove_file_from_s3(sender, instance, using, **kwargs):
+    instance.image.delete(save=False)
 
 
 class PurchaseBid(models.Model):

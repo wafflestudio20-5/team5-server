@@ -1,16 +1,21 @@
 from django.http import JsonResponse
 from rest_framework import generics, viewsets
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import  IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
-from shop.models import ProductInfo, Product, Wish, Brand, TransProduct, StoreProduct
+from shop.models import ProductInfo, Product, Wish, Brand, TransProduct, StoreProduct, ProductImage
 from shop.permissions import IsAdminUserOrReadOnly
 from shop.serializers import BrandSerializer, \
     TransProductDetailSerializer, StoreProductDetailSerializer, TransProductListSerializer, StoreProductListSerializer, \
     TransSizeWishSerializer, StoreSizeWishSerializer, ProductInfoSerializer
 
-
 # shows specific productinfo tag. superuser can update or destroy this product info.
+from shop.utils import rename_imagefile_to_uuid
+from styles.models import PostImage
+
+
 class ProductInfoRetrieveUpdateDestroyApiView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProductInfoSerializer
     permission_classes = [IsAdminUserOrReadOnly]
@@ -99,16 +104,29 @@ class BrandViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminUserOrReadOnly]
 
 
+@api_view(['POST', 'GET'])
+@permission_classes((IsAdminUserOrReadOnly,))
+def show_img(request, info):
+    if request.method == 'POST':
+        try:
+            img = request.FILES['product_image']
+        except:
+            raise ValidationError('No image has been uploaded')
+        ProductImage.objects.create(product=get_object_or_404(ProductInfo, pk=info), image=img)
+        return JsonResponse({
+            'message': 'OK'
+        }, status=201)
+    else:
+        return JsonResponse({
+            'images': [{"id": i.pk, "url": i.image.url} for i in ProductImage.objects.filter(product=info)]
+        }, status=200)
 
 
-
-
-
-
-
-
-
-
-
-
-
+@api_view(['DELETE'])
+@permission_classes((IsAdminUser,))
+def del_img(request, pk):
+    productimage = get_object_or_404(ProductImage, pk=pk)
+    productimage.delete()
+    return JsonResponse({
+        'message': 'OK'
+    }, status=200)

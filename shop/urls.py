@@ -1,8 +1,8 @@
-from django.urls import path, include, re_path
+from django.urls import path, re_path
 from shop.views import BrandViewSet, TransProductRetrieveUpdateDestroyApiView, \
     StoreProductRetrieveUpdateDestroyApiView, StoreProductListCreateApiView, TransProductListCreateApiView, \
     WishCheckView, \
-    SizeWishView, ProductInfoListCreateApiView, ProductInfoRetrieveUpdateDestroyApiView
+    SizeWishView, ProductInfoListCreateApiView, ProductInfoRetrieveUpdateDestroyApiView, show_img, del_img
 
 urlpatterns = [
     re_path(r'^productinfos/(?P<info>\d+)/transproducts/(?P<size>\d+)/$', TransProductRetrieveUpdateDestroyApiView.as_view()),
@@ -13,7 +13,8 @@ urlpatterns = [
     path('productinfos/<int:info>/storeproducts/', StoreProductListCreateApiView.as_view()),
     path('productinfos/<int:pk>/', ProductInfoRetrieveUpdateDestroyApiView.as_view()),
     path('productinfos/', ProductInfoListCreateApiView.as_view()),
-
+    path('productinfos/<int:info>/images/', show_img, name='image-upload'),
+    path('productimages/<int:pk>/', del_img, name='image-delete'),
     path('productinfos/<int:info>/sizes/', SizeWishView.as_view()),
     path('productinfos/<int:info>/wishes/', SizeWishView.as_view()),
     path('products/<int:pk>/wishes/', WishCheckView.as_view()),
@@ -22,5 +23,5 @@ urlpatterns = [
         'post': 'create',
         'put': 'update',
         'delete': 'destroy'
-    }), name='brand-view')
+    }), name='brand-view'),
 ]
