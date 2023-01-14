@@ -5,6 +5,7 @@ from shop.models import ProductInfo, Product, Brand, Wish, TransProduct, StorePr
 
 
 class ProductInfoSerializer(serializers.ModelSerializer):
+    productimage_set = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
         model = ProductInfo
@@ -38,6 +39,7 @@ class TransProductListSerializer(serializers.ModelSerializer):
     class Meta:
         model = TransProduct
         fields = ['id', 'size', 'purchase_price', 'sales_price', ]
+        read_only_fields = ['purchase_price', 'sales_price']
 
     def validate_size(self, size):
         if TransProduct.objects.filter(info=self.context['view'].kwargs['info'], size=size).exists():
@@ -79,9 +81,13 @@ class TransProductDetailSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         res = super().to_representation(instance)
         user = self.context['request'].user
-        wishcheck=False
-        if Wish.objects.filter(user=user, product=instance).exists():
+        if user.is_anonymous:
+            wishcheck=False
+        elif Wish.objects.filter(user=user, product=instance).exists():
             wishcheck = True
+        else:
+            wishcheck = False
+
         res.setdefault('user_wishcheck', wishcheck)
         return res
 
@@ -102,14 +108,17 @@ class StoreProductDetailSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         res = super().to_representation(instance)
         user = self.context['request'].user
-        wishcheck=False
-        if Wish.objects.filter(user=user, product=instance).exists():
+        if user.is_anonymous:
+            wishcheck=False
+        elif Wish.objects.filter(user=user, product=instance).exists():
             wishcheck = True
+        else:
+            wishcheck = False
         res.setdefault('user_wishcheck', wishcheck)
         return res
 
     def validate_size(self, size):
-        if Product.objects.filter(info=self.context['view'].kwargs['info'], size=size).exists():
+        if StoreProduct.objects.filter(info=self.context['view'].kwargs['info'], size=size).exists():
             raise serializers.ValidationError({"size": "This size already exists"})
         return size
 

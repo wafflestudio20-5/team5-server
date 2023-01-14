@@ -47,7 +47,7 @@ class ProductInfo(models.Model):
     kor_name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     shares = models.ManyToManyField(through='Share', to=Post)
-    delivery_tag = models.CharField(choices=DELIVERY_CHOICES, blank=False, max_length=12)
+    delivery_tag = models.CharField(choices=DELIVERY_CHOICES, max_length=12)
 
 
 class Product(models.Model):
