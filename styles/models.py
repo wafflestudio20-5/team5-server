@@ -13,6 +13,7 @@ class Profile(models.Model):
     user = models.OneToOneField(CustomUser, primary_key=True, on_delete=models.CASCADE, verbose_name='user')
     user_name = models.CharField(max_length=15, verbose_name="user_name")
     profile_name = models.CharField(max_length=15, verbose_name="profile_name")
+    introduction = models.CharField(max_length=100, verbose_name="introduction")
     img = models.ImageField(upload_to=partial(media_directory_path, forder_name='profile'), blank=True, null=True)
     follows = models.ManyToManyField('self', through='Follow', related_name='followed_by', symmetrical=False,
                                      blank=True)
@@ -22,6 +23,9 @@ class Follow(models.Model):
     from_profile = models.ForeignKey(Profile, related_name='followings', on_delete=models.CASCADE)
     to_profile = models.ForeignKey(Profile, related_name='followers', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
 
 
 class Post(models.Model):
