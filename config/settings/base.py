@@ -40,6 +40,7 @@ ALLOWED_HOSTS = []
 CUSTOM_APPS = [
     'accounts.apps.AccountsConfig',
     'styles.apps.StylesConfig',
+    'shop.apps.ShopConfig'
 ]
 
 REST_FRAMEWORK_APPS = [
@@ -48,6 +49,7 @@ REST_FRAMEWORK_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "dj_rest_auth",
     "dj_rest_auth.registration",
+    "storages",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
@@ -60,6 +62,7 @@ OTHER_TOOL_APPS = [
 ]
 
 INSTALLED_APPS = [
+                    "whitenoise.runserver_nostatic",
                      "django.contrib.admin",
                      "django.contrib.auth",
                      "django.contrib.contenttypes",
@@ -71,7 +74,6 @@ INSTALLED_APPS = [
 
 # depoy(DEBUG=False)일 때, static 파일 보여주는 용도
 CUSTOM_MIDDLEWARE = [
-    "whitenoise.middleware.WhiteNoiseMiddleware",
     "accounts.middleware.jwt_cookie_middleware.MoveJWTCookieIntoTheBody",
     "accounts.middleware.jwt_cookie_middleware.MoveJWTRefreshCookieIntoTheBody"
 ]
@@ -81,15 +83,16 @@ WHITENOISE_ALLOW_ALL_ORIGINS = True
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
-] + CUSTOM_MIDDLEWARE
+                 "django.middleware.security.SecurityMiddleware",
+                "whitenoise.middleware.WhiteNoiseMiddleware",
+                 "django.contrib.sessions.middleware.SessionMiddleware",
+                 "django.middleware.common.CommonMiddleware",
+                 "django.middleware.csrf.CsrfViewMiddleware",
+                 "django.contrib.auth.middleware.AuthenticationMiddleware",
+                 "django.contrib.messages.middleware.MessageMiddleware",
+                 "django.middleware.clickjacking.XFrameOptionsMiddleware",
+                 "corsheaders.middleware.CorsMiddleware",
+             ] + CUSTOM_MIDDLEWARE
 
 CORS_ORIGIN_WHITELIST = [
     'http://127.0.0.1:3000',
@@ -148,7 +151,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = "static/"
-
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
@@ -175,7 +178,7 @@ JWT_AUTH_COOKIE = 'my-app-auth'
 JWT_AUTH_REFRESH_COOKIE = 'my-app-refresh-auth'
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=90),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
@@ -215,7 +218,7 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
-LOGIN_URL = 'login'
+LOGIN_URL = 'https://d2fvyynal80kjq.cloudfront.net/join/email_sent'
 
 # URL_FRONT = 'http://****'  # 공개적인 웹페이지가 있다면 등록
 
@@ -243,3 +246,13 @@ REST_AUTH_REGISTER_SERIALIZERS = {
 }
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
+
+DEFAULT_FILE_STORAGE = 'config.storages.MediaStorage'
+MEDIAFILES_LOCATION = 'media'
+AWS_ACCESS_KEY_ID = config_secret_common['AWS_ACCESS_KEY_ID']
+AWS_SECRET_ACCESS_KEY = config_secret_common['AWS_SECRET_ACCESS_KEY']
+AWS_S3_SIGNATURE_VERSION = 's3v4'
+AWS_S3_REGION_NAME = 'ap-northeast-2'
+AWS_S3_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL = None
+AWS_S3_VERIFY = True

@@ -55,6 +55,7 @@ def follow(request, **kwargs):
     to_profile = get_object_or_404(Profile, pk=kwargs['user'])
     if from_profile == to_profile:
         return HttpResponse('cannot follow or unfollow oneself', status=status.HTTP_400_BAD_REQUEST)
+
     try:
         follow_instance = Follow.objects.get(from_profile=from_profile, to_profile=to_profile)
         follow_instance.delete()
