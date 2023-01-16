@@ -14,6 +14,9 @@ CLOTHES_SIZE_CHOICES = [('ALL', 'ALL'), ('XXS', 'XXS'), ('XS', 'XS'), ('S', 'S')
 class Brand(models.Model):
     name = models.CharField(max_length=30)
 
+    class Meta:
+        ordering = ['id']
+
     def __str__(self):
         return self.name
 
@@ -49,11 +52,15 @@ class ProductInfo(models.Model):
     shares = models.ManyToManyField(through='Share', to=Post)
     delivery_tag = models.CharField(choices=DELIVERY_CHOICES, max_length=12)
 
+    class Meta:
+        ordering = ['id']
 
 class Product(models.Model):
     size = models.CharField(choices=SHOE_SIZE_CHOICES + CLOTHES_SIZE_CHOICES, max_length=5, default='ALL')
     wishes = models.ManyToManyField(through='Wish', to=get_user_model())
 
+    class Meta:
+        ordering = ['id']
 
 class TransProduct(Product):
     purchase_price = models.IntegerField(blank=True, null=True, default=None)
