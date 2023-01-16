@@ -3,6 +3,7 @@ from allauth.account.utils import setup_user_email
 from dj_rest_auth.serializers import LoginSerializer
 from dj_rest_auth.registration.serializers import RegisterSerializer
 from django.contrib.auth import authenticate, get_user_model
+from django.db import transaction
 from phonenumber_field.modelfields import PhoneNumberField
 from rest_framework import exceptions, serializers
 from accounts.models import CustomUser
@@ -59,15 +60,16 @@ class CustomRegisterSerializer(RegisterSerializer):
             "shoe_size": self.validated_data.get("shoe_size")
         }
 
+    @transaction.atomic
     def save(self, request):
         adapter = get_adapter()
         user = adapter.new_user(request)
         self.cleaned_data = self.get_cleaned_data()
+        adapter.save_user(request, user, self)
         setup_user_email(request, user, [])
         user.phone_number = self.cleaned_data.get("phone_number")
         user.shoe_size = self.cleaned_data.get("shoe_size")
         user.save()
-        adapter.save_user(request, user, self)
         return user
 
 
