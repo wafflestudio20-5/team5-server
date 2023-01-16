@@ -14,12 +14,12 @@ from accounts.serializers import CustomUserDetailsSerializer
 def google_auth(request):
     access_token = request.GET.get('token', None)
     if access_token is None:
-        return JsonResponse({'err_msg': 'query parameter "token" needed'}, status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({'message': 'query parameter "token" required'}, status=status.HTTP_400_BAD_REQUEST)
 
     user_req = requests.get(f"https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={access_token}")
     user_req_status = user_req.status_code
-    if user_req_status != 200:
-        return JsonResponse({'err_msg': 'failed to get user information'}, status=status.HTTP_400_BAD_REQUEST)
+    if user_req_status != status.HTTP_200_OK:
+        return JsonResponse({'message': 'failed to get user information'}, status=status.HTTP_400_BAD_REQUEST)
 
     user_req_json = user_req.json()
     email = user_req_json['email']
@@ -31,13 +31,13 @@ def google_auth(request):
 def naver_auth(request):
     access_token = request.GET.get('token', None)
     if access_token is None:
-        return JsonResponse({'err_msg': 'query parameter "token" needed'}, status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({'message': 'query parameter "token" required'}, status=status.HTTP_400_BAD_REQUEST)
 
     user_req = requests.get(url="https://openapi.naver.com/v1/nid/me",
                             headers={"Authorization": f"Bearer {access_token}"})
     user_req_status = user_req.status_code
-    if user_req_status != 200:
-        return JsonResponse({'err_msg': 'failed to get user information'}, status=status.HTTP_400_BAD_REQUEST)
+    if user_req_status != status.HTTP_200_OK:
+        return JsonResponse({'message': 'failed to get user information'}, status=status.HTTP_400_BAD_REQUEST)
 
     user_req_json = user_req.json()
     email = user_req_json['response']['email']
@@ -53,7 +53,7 @@ def _auth(email):
             **tokens,
             'user': CustomUserDetailsSerializer(user).data,
             'exists': True
-        })
+        }, status=status.HTTP_200_OK)
 
     except CustomUser.DoesNotExist:
         user = CustomUser.objects.create(email=email)
@@ -63,7 +63,7 @@ def _auth(email):
             **tokens,
             'user': CustomUserDetailsSerializer(user).data,
             'exists': False
-        })
+        }, status=status.HTTP_201_CREATED)
 
 
 def _login(user):
