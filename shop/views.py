@@ -22,21 +22,23 @@ class ProductInfoRetrieveUpdateDestroyApiView(generics.RetrieveUpdateDestroyAPIV
     queryset = ProductInfo.objects.all()
 
 
-class ProductInfoListApiView(generics.ListAPIView):
-    serializer_class = ProductInfoSerializer
-    permission_classes = [IsAdminUserOrReadOnly]
-    queryset = ProductInfo.objects.filter()
-
-    def get_queryset(self):
-        delivery_tag = self.kwargs['delivery_tag']
-        return ProductInfo.objects.filter(delivery_tag=delivery_tag)
-
-
-# shows list of productinfos.. can create new productinfo
 class ProductInfoListCreateApiView(generics.ListCreateAPIView):
     serializer_class = ProductInfoSerializer
     permission_classes = [IsAdminUserOrReadOnly]
-    queryset = ProductInfo.objects.all()
+
+    def get_queryset(self):
+        queryset = ProductInfo.objects.all()
+        deltag = self.request.query_params.get('delivery_tag')
+        brand_id = self.request.query_params.get('brand_id')
+
+        if deltag and brand_id:
+            return queryset.filter(delivery_tag=deltag, brand=brand_id)
+        elif deltag:
+            return queryset.filter(delivery_tag=deltag)
+        elif brand_id:
+            return queryset.filter(brand=brand_id)
+        else:
+            return queryset
 
 
 # shows list of products according to productinfo.. can create new product for productinfo
