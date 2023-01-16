@@ -3,7 +3,7 @@ from rest_framework import generics, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import  IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.views import APIView
 from shop.models import ProductInfo, Product, Wish, Brand, TransProduct, StoreProduct, ProductImage
 from shop.permissions import IsAdminUserOrReadOnly
@@ -22,6 +22,16 @@ class ProductInfoRetrieveUpdateDestroyApiView(generics.RetrieveUpdateDestroyAPIV
     queryset = ProductInfo.objects.all()
 
 
+class ProductInfoListApiView(generics.ListAPIView):
+    serializer_class = ProductInfoSerializer
+    permission_classes = [IsAdminUserOrReadOnly]
+    queryset = ProductInfo.objects.filter()
+
+    def get_queryset(self):
+        delivery_tag = self.kwargs['delivery_tag']
+        return ProductInfo.objects.filter(delivery_tag=delivery_tag)
+
+
 # shows list of productinfos.. can create new productinfo
 class ProductInfoListCreateApiView(generics.ListCreateAPIView):
     serializer_class = ProductInfoSerializer
@@ -30,43 +40,40 @@ class ProductInfoListCreateApiView(generics.ListCreateAPIView):
 
 
 # shows list of products according to productinfo.. can create new product for productinfo
-class TransProductListCreateApiView(generics.ListCreateAPIView):
-    serializer_class = TransProductListSerializer
+class ProductListCreateApiView(generics.ListCreateAPIView):
     permission_classes = [IsAdminUserOrReadOnly]
 
     def get_queryset(self):
-        info = self.kwargs['info']
-        return TransProduct.objects.filter(info=info).select_related('info')
+        productinfo = get_object_or_404(ProductInfo, pk=self.kwargs['info'])
+        if productinfo.delivery_tag == 'immediate':
+            return TransProduct.objects.filter(info=self.kwargs['info'])
+        elif productinfo.delivery_tag == 'brand':
+            return StoreProduct.objects.filter(info=self.kwargs['info'])
 
-
-class StoreProductListCreateApiView(generics.ListCreateAPIView):
-    serializer_class = StoreProductListSerializer
-    permission_classes = [IsAdminUserOrReadOnly]
-
-    def get_queryset(self):
-        info = self.kwargs['info']
-        return StoreProduct.objects.filter(info=info).select_related('info')
+    def get_serializer_class(self):
+        productinfo = get_object_or_404(ProductInfo, pk=self.kwargs['info'])
+        if productinfo.delivery_tag == 'immediate':
+            return TransProductListSerializer
+        return StoreProductListSerializer
 
 
 # shows specific product and allows superuser to update or destroy the product
-class TransProductRetrieveUpdateDestroyApiView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = TransProductDetailSerializer
+class ProductRetrieveUpdateDestroyApiView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAdminUserOrReadOnly]
     lookup_field = 'size'
 
     def get_queryset(self):
-        info = self.kwargs['info']
-        return TransProduct.objects.filter(info=info).select_related('info').prefetch_related('wishes')
+        productinfo = get_object_or_404(ProductInfo, pk=self.kwargs['info'])
+        if productinfo.delivery_tag == 'immediate':
+            return TransProduct.objects.filter(info=self.kwargs['info'])
+        elif productinfo.delivery_tag == 'brand':
+            return StoreProduct.objects.filter(info=self.kwargs['info'])
 
-
-class StoreProductRetrieveUpdateDestroyApiView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = StoreProductDetailSerializer
-    permission_classes = [IsAdminUserOrReadOnly]
-    lookup_field = 'size'
-
-    def get_queryset(self):
-        info = self.kwargs['info']
-        return StoreProduct.objects.filter(info=info).select_related('info').prefetch_related('wishes')
+    def get_serializer_class(self):
+        productinfo = get_object_or_404(ProductInfo, pk=self.kwargs['info'])
+        if productinfo.delivery_tag == 'immediate':
+            return TransProductDetailSerializer
+        return StoreProductDetailSerializer
 
 
 class WishCheckView(APIView):
@@ -114,7 +121,7 @@ def show_img(request, info):
             raise ValidationError('No image has been uploaded')
         ProductImage.objects.create(product=get_object_or_404(ProductInfo, pk=info), image=img)
         return JsonResponse({
-            'message': 'OK'
+            'message': 'Created'
         }, status=201)
     else:
         return JsonResponse({
@@ -128,5 +135,5 @@ def del_img(request, pk):
     productimage = get_object_or_404(ProductImage, pk=pk)
     productimage.delete()
     return JsonResponse({
-        'message': 'OK'
-    }, status=200)
+        'message': 'Deleted'
+    }, status=204)
