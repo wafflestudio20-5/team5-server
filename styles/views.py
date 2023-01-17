@@ -2,7 +2,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser
 from rest_framework.response import Response
 
 from accounts.models import CustomUser
@@ -10,6 +10,17 @@ from styles.models import Profile, Follow, Post, Comment, Reply
 from styles.serializers import ProfileSerializer, FollowerSerializer, FollowingSerializer, PostSerializer, \
     CommentSerializer
 from styles.permissions import IsProfileOwnerOrReadOnly, IsPostWriterOrReadOnly
+
+
+class ProfileListAPIView(generics.ListAPIView):
+    queryset = Profile.objects.all()
+    serializer_class = ProfileSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['current_user'] = self.request.user
+        return context
 
 
 class ProfileRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
@@ -34,7 +45,7 @@ class FollowerListAPIView(generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         followers = self.get_queryset()
         serializer = self.serializer_class(followers, many=True, context={'current_user': self.request.user})
-        return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class FollowingListAPIView(generics.ListAPIView):
@@ -47,7 +58,7 @@ class FollowingListAPIView(generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         followings = self.get_queryset()
         serializer = self.serializer_class(followings, many=True, context={'current_user': self.request.user})
-        return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['PATCH'])
@@ -77,6 +88,10 @@ class PostListCreateAPIView(generics.ListCreateAPIView):
         context['current_user'] = self.request.user
         return context
 
+    def get_serializer(self, *args, **kwargs):
+        kwargs['context'] = self.get_serializer_context()
+        return self.serializer_class(*args, **kwargs)
+
     def get(self, request, *args, **kwargs):
         feed_type = self.request.query_params.get('type', None)
         if feed_type is None:
@@ -90,8 +105,8 @@ class PostListCreateAPIView(generics.ListCreateAPIView):
 
         if feed_type == 'latest':
             posts = self.get_queryset()
-            serializer = self.serializer_class(posts, many=True)
-            return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+            serializer = self.get_serializer(posts, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
         if feed_type == 'following':
             user: CustomUser = request.user
@@ -102,8 +117,8 @@ class PostListCreateAPIView(generics.ListCreateAPIView):
             posts = self.queryset.filter(
                 created_by__in=[follow_instance.to_profile for follow_instance in current_profile.followings.all()]
             ).order_by('-created_at')
-            serializer = self.serializer_class(posts, many=True)
-            return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+            serializer = self.get_serializer(posts, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
         if feed_type == 'default':
             user_id = self.request.query_params.get('user_id')
@@ -113,8 +128,8 @@ class PostListCreateAPIView(generics.ListCreateAPIView):
 
             writer = get_object_or_404(Profile, pk=user_id)
             posts = self.queryset.filter(created_by=writer)
-            serializer = self.serializer_class(posts, many=True)
-            return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+            serializer = self.get_serializer(posts, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
         return JsonResponse({'message': (
             'invalid query parameter "type"\n'
