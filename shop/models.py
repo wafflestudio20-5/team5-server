@@ -10,6 +10,8 @@ CLOTHES_SIZE_CHOICES = [('ALL', 'ALL'), ('XXS', 'XXS'), ('XS', 'XS'), ('S', 'S')
                         ('XXXL', 'XXXL')] + \
                        [('{0}'.format(28 + i), '{0}'.format(28 + i)) for i in range(9)]
 
+CATECORY_CHOICES = [('shoes', 'shoes'),('clothes','clothes'),('fashion','fashion'),('life','life'),('tech','tech')]
+
 
 class Brand(models.Model):
     name = models.CharField(max_length=30)
@@ -51,6 +53,7 @@ class ProductInfo(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     shares = models.ManyToManyField(through='Share', to=Post)
     delivery_tag = models.CharField(choices=DELIVERY_CHOICES, max_length=12)
+    category = models.CharField(choices=CATECORY_CHOICES, max_length=10, null=True, default=None)
 
     class Meta:
         ordering = ['id']
