@@ -3,13 +3,14 @@ from rest_framework import generics, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
 from shop.models import ProductInfo, Product, Wish, Brand, TransProduct, StoreProduct, ProductImage
 from shop.permissions import IsAdminUserOrReadOnly
 from shop.serializers import BrandSerializer, \
     TransProductDetailSerializer, StoreProductDetailSerializer, TransProductListSerializer, StoreProductListSerializer, \
     TransSizeWishSerializer, StoreSizeWishSerializer, ProductInfoSerializer
+from django.db.models import Q
 
 # shows specific productinfo tag. superuser can update or destroy this product info.
 from shop.utils import rename_imagefile_to_uuid
@@ -29,16 +30,22 @@ class ProductInfoListCreateApiView(generics.ListCreateAPIView):
     def get_queryset(self):
         queryset = ProductInfo.objects.all()
         deltag = self.request.query_params.get('delivery_tag')
-        brand_id = self.request.query_params.get('brand_id')
+        brand_id = self.request.query_params.getlist('brand_id')
+        category = self.request.query_params.getlist('category')
 
-        if deltag and brand_id:
-            return queryset.filter(delivery_tag=deltag, brand=brand_id)
-        elif deltag:
-            return queryset.filter(delivery_tag=deltag)
-        elif brand_id:
-            return queryset.filter(brand=brand_id)
-        else:
-            return queryset
+        if deltag:
+            queryset=queryset.filter(delivery_tag=deltag)
+        if brand_id:
+            condition = Q()
+            for id in brand_id:
+                    condition |= Q(brand__exact=id)
+            queryset=queryset.filter(condition)
+        if category:
+            condition = Q()
+            for c in category:
+                    condition |= Q(category__exact=c)
+            queryset=queryset.filter(condition)
+        return queryset
 
 
 # shows list of products according to productinfo.. can create new product for productinfo
