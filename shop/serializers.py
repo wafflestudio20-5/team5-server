@@ -1,7 +1,7 @@
 from django.db.models import Count
 from rest_framework import serializers
 import shop
-from shop.models import ProductInfo, Product, Brand, Wish, TransProduct, StoreProduct
+from shop.models import ProductInfo, Brand, Wish, TransProduct, StoreProduct
 
 
 class ProductInfoSerializer(serializers.ModelSerializer):
@@ -100,10 +100,14 @@ class TransProductDetailSerializer(serializers.ModelSerializer):
 class StoreProductDetailSerializer(serializers.ModelSerializer):
     info = ProductInfoSerializer(read_only=True)
     size = serializers.ChoiceField(choices=shop.models.SHOE_SIZE_CHOICES+shop.models.CLOTHES_SIZE_CHOICES)
+    size_options = serializers.SerializerMethodField()
 
     class Meta:
         model = StoreProduct
-        fields = ['id', 'size', 'sales_price', 'info']
+        fields = ['id', 'size', 'sales_price', 'info', 'size_options']
+
+    def get_size_options(self, obj: StoreProduct):
+        return [i.size for i in StoreProduct.objects.filter(info=obj.info) if i.size !='ALL']
 
     def to_representation(self, instance):
         res = super().to_representation(instance)

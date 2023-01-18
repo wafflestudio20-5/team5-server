@@ -1,3 +1,4 @@
+from django.core.exceptions import FieldError
 from django.http import JsonResponse
 from rest_framework import generics, viewsets
 from rest_framework.decorators import api_view, permission_classes
@@ -44,8 +45,8 @@ class ProductInfoListCreateApiView(generics.ListCreateAPIView):
             condition = Q()
             for c in category:
                     condition |= Q(category__exact=c)
-            queryset=queryset.filter(condition)
-        return queryset
+            queryset = queryset.filter(condition)
+        return queryset.prefetch_related('productimage_set')
 
 
 # shows list of products according to productinfo.. can create new product for productinfo
@@ -74,9 +75,9 @@ class ProductRetrieveUpdateDestroyApiView(generics.RetrieveUpdateDestroyAPIView)
     def get_queryset(self):
         productinfo = get_object_or_404(ProductInfo, pk=self.kwargs['info'])
         if productinfo.delivery_tag == 'immediate':
-            return TransProduct.objects.filter(info=self.kwargs['info'])
+            return TransProduct.objects.filter(info=self.kwargs['info']).select_related('info')
         elif productinfo.delivery_tag == 'brand':
-            return StoreProduct.objects.filter(info=self.kwargs['info'])
+            return StoreProduct.objects.filter(info=self.kwargs['info']).select_related('info')
 
     def get_serializer_class(self):
         productinfo = get_object_or_404(ProductInfo, pk=self.kwargs['info'])
@@ -106,6 +107,7 @@ class SizeWishView(generics.ListAPIView):
             return TransProduct.objects.filter(info=self.kwargs['info'])
         elif productinfo.delivery_tag == 'brand':
             return StoreProduct.objects.filter(info=self.kwargs['info'])
+        raise FieldError
 
     def get_serializer_class(self):
         productinfo = get_object_or_404(ProductInfo, pk=self.kwargs['info'])
