@@ -4,6 +4,7 @@ from rest_framework import generics, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
 from shop.models import ProductInfo, Product, Wish, Brand, TransProduct, StoreProduct, ProductImage
@@ -11,7 +12,7 @@ from shop.permissions import IsAdminUserOrReadOnly
 from shop.serializers import BrandSerializer, \
     TransProductDetailSerializer, StoreProductDetailSerializer, TransProductListSerializer, StoreProductListSerializer, \
     TransSizeWishSerializer, StoreSizeWishSerializer, ProductInfoSerializer
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 
 # shows specific productinfo tag. superuser can update or destroy this product info.
 from shop.utils import rename_imagefile_to_uuid
@@ -46,7 +47,14 @@ class ProductInfoListCreateApiView(generics.ListCreateAPIView):
             for c in category:
                     condition |= Q(category__exact=c)
             queryset = queryset.filter(condition)
-        return queryset.prefetch_related('productimage_set')
+        return queryset.prefetch_related(
+            'productimage_set','brand','share_set',
+            Prefetch('transproduct_set',
+                     queryset=TransProduct.objects.select_related('product_ptr').prefetch_related('wish_set')
+                     ),
+            Prefetch('storeproduct_set',
+                     queryset=StoreProduct.objects.select_related('product_ptr').prefetch_related('wish_set'))
+                     )
 
 
 # shows list of products according to productinfo.. can create new product for productinfo
