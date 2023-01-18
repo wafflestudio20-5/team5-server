@@ -43,7 +43,6 @@ class FollowerListAPIView(generics.ListAPIView):
         return Follow.objects.filter(to_profile__exact=self.kwargs.get('user_id'))
 
     def get(self, request, *args, **kwargs):
-        self.request.FILES.get()
         followers = self.get_queryset()
         serializer = self.serializer_class(followers, many=True, context={'current_user': self.request.user})
         return Response(serializer.data, status=status.HTTP_200_OK)
