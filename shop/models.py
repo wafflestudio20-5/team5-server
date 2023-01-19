@@ -1,16 +1,19 @@
+from functools import partial
 from django.db import models
 from django.dispatch import receiver
 from styles.models import Post
-from .utils import rename_imagefile_to_uuid
+from common.utils import get_media_path
 from django.contrib.auth import get_user_model
 
 DELIVERY_CHOICES = [('immediate', 'immediate'), ('brand', 'brand')]
 SHOE_SIZE_CHOICES = [('ALL', 'ALL')] + [('{0}'.format(70 + 5 * i), '{0}'.format(70 + 5 * i)) for i in range(53)]
-CLOTHES_SIZE_CHOICES = [('ALL', 'ALL'), ('XXS', 'XXS'), ('XS', 'XS'), ('S', 'S'), ('M', 'M'), ('L', 'L'), ('XL', 'XL'), ('XXL', 'XXL'),
+CLOTHES_SIZE_CHOICES = [('ALL', 'ALL'), ('XXS', 'XXS'), ('XS', 'XS'), ('S', 'S'), ('M', 'M'), ('L', 'L'), ('XL', 'XL'),
+                        ('XXL', 'XXL'),
                         ('XXXL', 'XXXL')] + \
                        [('{0}'.format(28 + i), '{0}'.format(28 + i)) for i in range(9)]
 
-CATECORY_CHOICES = [('shoes', 'shoes'),('clothes','clothes'),('fashion','fashion'),('life','life'),('tech','tech')]
+CATECORY_CHOICES = [('shoes', 'shoes'), ('clothes', 'clothes'), ('fashion', 'fashion'), ('life', 'life'),
+                    ('tech', 'tech')]
 
 
 class Brand(models.Model):
@@ -58,12 +61,14 @@ class ProductInfo(models.Model):
     class Meta:
         ordering = ['id']
 
+
 class Product(models.Model):
     size = models.CharField(choices=SHOE_SIZE_CHOICES + CLOTHES_SIZE_CHOICES, max_length=5, default='ALL')
     wishes = models.ManyToManyField(through='Wish', to=get_user_model())
 
     class Meta:
         ordering = ['id']
+
 
 class TransProduct(Product):
     purchase_price = models.IntegerField(blank=True, null=True, default=None)
@@ -74,7 +79,7 @@ class TransProduct(Product):
         ordering = ['info']
 
     def __str__(self):
-        return self.info.eng_name[:10]+"_"+self.size+"_"+"trans"
+        return self.info.eng_name[:10] + "_" + self.size + "_" + "trans"
 
 
 class StoreProduct(Product):
@@ -85,7 +90,7 @@ class StoreProduct(Product):
         ordering = ['info']
 
     def __str__(self):
-        return self.info.eng_name[:10]+"_"+self.size+"_"+"store"
+        return self.info.eng_name[:10] + "_" + self.size + "_" + "store"
 
 
 # manytomanyfield
@@ -101,7 +106,7 @@ class Share(models.Model):
 
 class ProductImage(models.Model):
     product = models.ForeignKey(ProductInfo, on_delete=models.CASCADE)
-    image = models.ImageField(upload_to=rename_imagefile_to_uuid)
+    image = models.ImageField(upload_to=partial(get_media_path, dir_name='shop'))
 
 
 @receiver(models.signals.post_delete, sender=ProductImage)

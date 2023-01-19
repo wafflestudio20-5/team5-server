@@ -5,7 +5,7 @@ from styles.models import Follow, Profile, Post, Reply, Comment
 
 
 class NestedProfileSerializer(serializers.ModelSerializer):
-    user_id = serializers.PrimaryKeyRelatedField(read_only=True)
+    image = serializers.ImageField(max_length=None, use_url=True)
 
     class Meta:
         model = Profile
@@ -25,7 +25,7 @@ class NestedProfileSerializer(serializers.ModelSerializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-    user_id = serializers.PrimaryKeyRelatedField(read_only=True)
+    image = serializers.ImageField(max_length=None, use_url=True)
     num_followers = serializers.SerializerMethodField()
     num_followings = serializers.SerializerMethodField()
 

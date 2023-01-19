@@ -4,7 +4,6 @@ from rest_framework import generics, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
 from shop.models import ProductInfo, Product, Wish, Brand, TransProduct, StoreProduct, ProductImage
@@ -15,8 +14,6 @@ from shop.serializers import BrandSerializer, \
 from django.db.models import Q, Prefetch
 
 # shows specific productinfo tag. superuser can update or destroy this product info.
-from shop.utils import rename_imagefile_to_uuid
-from styles.models import PostImage
 
 
 class ProductInfoRetrieveUpdateDestroyApiView(generics.RetrieveUpdateDestroyAPIView):

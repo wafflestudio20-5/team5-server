@@ -1,12 +1,7 @@
-import uuid
-from pathlib import Path
 from functools import partial
 from django.db import models
 from accounts.models import CustomUser
-
-
-def media_directory_path(filename, dir_name):
-    return f'{dir_name}/{str(uuid.uuid4()) + Path(filename).suffix}'
+from common.utils import get_media_path
 
 
 class Profile(models.Model):
@@ -14,7 +9,7 @@ class Profile(models.Model):
     user_name = models.CharField(max_length=15)
     profile_name = models.CharField(max_length=15, unique=True)
     introduction = models.CharField(max_length=100, blank=True, default='')
-    image = models.ImageField(upload_to=partial(media_directory_path, dir_name='profile'), blank=True, null=True)
+    image = models.ImageField(upload_to=partial(get_media_path, dir_name='profiles'), null=True)
     follows = models.ManyToManyField('self', through='Follow', related_name='followed_by', symmetrical=False,
                                      blank=True)
 
@@ -32,7 +27,7 @@ class Post(models.Model):
     content = models.TextField(max_length=1000)
     created_by = models.ForeignKey(Profile, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
-    # image_ratio = models.FloatField()
+    image_ratio = models.FloatField()
 
     class Meta:
         ordering = ['-created_at']
@@ -40,7 +35,7 @@ class Post(models.Model):
 
 class PostImage(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='post/%Y/%m/%d')
+    image = models.ImageField(upload_to=partial(get_media_path, dir_name='posts'))
 
 
 # class PostTag(models.Model):
