@@ -19,7 +19,7 @@ class ProfileListAPIView(generics.ListAPIView):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context['current_user'] = self.request.user
+        context['request'] = self.request
         return context
 
 
@@ -31,7 +31,7 @@ class ProfileRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context['current_user'] = self.request.user
+        context['request'] = self.request
         return context
 
 
@@ -44,7 +44,7 @@ class FollowerListAPIView(generics.ListAPIView):
 
     def get(self, request, *args, **kwargs):
         followers = self.get_queryset()
-        serializer = self.serializer_class(followers, many=True, context={'current_user': self.request.user})
+        serializer = self.serializer_class(followers, many=True, context={'request': self.request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -57,7 +57,7 @@ class FollowingListAPIView(generics.ListAPIView):
 
     def get(self, request, *args, **kwargs):
         followings = self.get_queryset()
-        serializer = self.serializer_class(followings, many=True, context={'current_user': self.request.user})
+        serializer = self.serializer_class(followings, many=True, context={'request': self.request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -79,13 +79,13 @@ def follow(request, **kwargs):
 
 
 class PostListCreateAPIView(generics.ListCreateAPIView):
-    queryset = Post.objects.select_related('created_by').all()
+    queryset = Post.objects.select_related('created_by').prefetch_related('images').all()
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context['current_user'] = self.request.user
+        context['request'] = self.request
         return context
 
     def get_serializer(self, *args, **kwargs):
@@ -138,13 +138,13 @@ class PostListCreateAPIView(generics.ListCreateAPIView):
 
 
 class PostRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Post.objects.select_related('created_by').all()
+    queryset = Post.objects.select_related('created_by').prefetch_related('images').all()
     serializer_class = PostSerializer
     permission_classes = [IsPostWriterOrReadOnly]
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context['current_user'] = self.request.user
+        context['request'] = self.request
         return context
 
 
