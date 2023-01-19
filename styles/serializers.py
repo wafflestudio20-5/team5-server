@@ -1,7 +1,9 @@
+from django.db.models import ImageField
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from accounts.models import CustomUser
-from styles.models import Follow, Profile, Post, Reply, Comment
+from styles.models import Follow, Profile, Post, Reply, Comment, PostImage
 
 
 class NestedProfileSerializer(serializers.ModelSerializer):
@@ -10,10 +12,11 @@ class NestedProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ['user_id', 'user_name', 'profile_name', 'image']
+        read_only_fields = fields
 
     def to_representation(self, instance: Profile):
         representation = super().to_representation(instance)
-        current_user: CustomUser = self.context['current_user']
+        current_user: CustomUser = self.context['request'].user
         if current_user.is_anonymous:
             return {**representation, 'following': 'login required'}
 
@@ -32,7 +35,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ['user_id', 'user_name', 'profile_name', 'introduction', 'image', 'num_followers', 'num_followings']
-        read_only_fields = ['user_id', 'num_followers', 'num_followings']
+        read_only_fields = ['user_id', 'image', 'num_followers', 'num_followings']
 
     def get_num_followers(self, obj: Profile):
         return obj.followers.count()
@@ -40,9 +43,18 @@ class ProfileSerializer(serializers.ModelSerializer):
     def get_num_followings(self, obj: Profile):
         return obj.followings.count()
 
+    def to_internal_value(self, data):
+        internal_value = super().to_internal_value(data)
+        try:
+            image = self.context['request'].FILES['image']
+            print(image)
+            return {**internal_value, 'image': image}
+        except KeyError:
+            return {**internal_value, 'image': None}
+
     def to_representation(self, instance: Profile):
         representation = super().to_representation(instance)
-        current_user: CustomUser = self.context['current_user']
+        current_user: CustomUser = self.context['request'].user
         if current_user.is_anonymous:
             return {**representation, 'following': 'login required'}
 
@@ -72,20 +84,28 @@ class FollowingSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
+    images = serializers.ListSerializer(read_only=True, child=serializers.ImageField(max_length=None, use_url=True))
     created_by = NestedProfileSerializer(read_only=True)
     num_comments = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
-        fields = ['id', 'content', 'created_by', 'created_at', 'num_comments']
-        read_only_fields = ['id', 'created_by', 'created_at', 'num_comments']
+        fields = ['id', 'content', 'images', 'image_ratio', 'created_by', 'created_at', 'num_comments']
+        read_only_fields = ['id', 'images', 'created_by', 'created_at', 'num_comments']
 
     def get_num_comments(self, obj: Post):
         return obj.comments.count() + obj.replies.count()
 
     def create(self, validated_data):
-        current_user: CustomUser = self.context['current_user']
+        current_user: CustomUser = self.context['request'].user
         instance = Post.objects.create(**validated_data, created_by_id=current_user.id)
+        images = self.context['request'].FILES.getlist('image')
+        if not images:
+            raise ValidationError('No image has been uploaded')
+
+        for image in images:
+            PostImage(post=instance, image=image).save()
+
         return instance
 
 
