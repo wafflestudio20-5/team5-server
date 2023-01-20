@@ -7,6 +7,7 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
 from shop.models import ProductInfo, Product, Wish, Brand, TransProduct, StoreProduct, ProductImage
+from shop.paginations import CustomPagination
 from shop.permissions import IsAdminUserOrReadOnly
 from shop.serializers import BrandSerializer, \
     TransProductDetailSerializer, StoreProductDetailSerializer, TransProductListSerializer, StoreProductListSerializer, \
@@ -25,6 +26,7 @@ class ProductInfoRetrieveUpdateDestroyApiView(generics.RetrieveUpdateDestroyAPIV
 class ProductInfoListCreateApiView(generics.ListCreateAPIView):
     serializer_class = ProductInfoSerializer
     permission_classes = [IsAdminUserOrReadOnly]
+    pagination_class = CustomPagination
 
     def get_queryset(self):
         queryset = ProductInfo.objects.all()
@@ -125,6 +127,7 @@ class BrandViewSet(viewsets.ModelViewSet):
     queryset = Brand.objects.all()
     serializer_class = BrandSerializer
     permission_classes = [IsAdminUserOrReadOnly]
+    pagination_class = CustomPagination
 
 
 @api_view(['POST', 'GET'])
