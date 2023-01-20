@@ -4,9 +4,9 @@ from uuid import uuid4
 from django.utils import timezone
 
 
-def rename_imagefile_to_uuid(instance, filename):
+def get_media_path(instance, filename, dir_name):
     ymd_path = timezone.now().strftime('%Y/%m/%d')
-    upload_to = 'shop/'+ymd_path
+    upload_to = dir_name + '/' + ymd_path
     ext = filename.split('.')[-1]
     uuid = uuid4().hex
 
