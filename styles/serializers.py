@@ -47,7 +47,6 @@ class ProfileSerializer(serializers.ModelSerializer):
         internal_value = super().to_internal_value(data)
         try:
             image = self.context['request'].FILES['image']
-            print(image)
             return {**internal_value, 'image': image}
         except KeyError:
             return {**internal_value, 'image': None}
