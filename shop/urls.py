@@ -23,4 +23,14 @@ urlpatterns = [
             'put': 'update',
             'delete': 'destroy'
         }), name='brand-view'),
+    path('products/<int:pk>/purchasebids/', PurchaseBidViewSet.as_view({
+        'get': 'list',
+        'post': 'create',
+        }), name='brand-view'),
+    path('produdcts/<int:pk>/salesbids/', SalesBidViewSet.as_view({
+        'get': 'list',
+        'post': 'create',
+        }), name='brand-view'),
+    path('purchasebids/<int:pk>/'),
+    path('salesbids/<int:pk>/')
 ]

@@ -7,7 +7,8 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
-from shop.models import ProductInfo, Product, Wish, Brand, TransProduct, StoreProduct, ProductImage
+from shop.models import ProductInfo, Product, Wish, Brand, TransProduct, StoreProduct, ProductImage, PurchaseBid, \
+    SalesBid
 from shop.paginations import CustomPagination
 from shop.permissions import IsAdminUserOrReadOnly
 from shop.serializers import BrandSerializer, \
@@ -159,3 +160,17 @@ def del_img(request, pk):
     return JsonResponse({
         'message': 'Deleted'
     }, status=204)
+
+
+class PurchaseBidViewSet(viewsets.ModelViewSet):
+    queryset = PurchaseBid.objects.all()
+    serializer_class =
+    permission_classes = [IsAdminUserOrReadOnly]
+    pagination_class = CustomPagination
+
+
+class SalesBidViewSet(viewsets.ModelViewSet):
+    queryset = SalesBid.objects.all()
+    serializer_class =
+    permission_classes = [IsAdminUserOrReadOnly]
+    pagination_class = CustomPagination
