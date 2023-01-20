@@ -83,7 +83,7 @@ class FollowingSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
-    images = serializers.ListSerializer(read_only=True, child=serializers.ImageField(max_length=None, use_url=True))
+    images = serializers.SerializerMethodField()
     created_by = NestedProfileSerializer(read_only=True)
     num_comments = serializers.SerializerMethodField()
 
@@ -91,6 +91,9 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         fields = ['id', 'content', 'images', 'image_ratio', 'created_by', 'created_at', 'num_comments']
         read_only_fields = ['id', 'images', 'created_by', 'created_at', 'num_comments']
+
+    def get_images(self, obj: Post):
+        return [post_image.image.url for post_image in obj.images.all()]
 
     def get_num_comments(self, obj: Post):
         return obj.comments.count() + obj.replies.count()
