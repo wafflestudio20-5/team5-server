@@ -1,18 +1,9 @@
-#/appspec.yml
-# version은 0.0을 적어준다.
 version: 0.0
-# 선택한 ec2 가 window server가 아니라면 linux를 적어준다.
 os: linux
 files:
-# source는 프로젝트 기준, destination은 instance 기준으로 입력해주고, 
-# source가 destination안에 복사됨
   - source: /
     destination: /home/ubuntu/build
 hooks:
-# 주의 할 점은 빈칸 yml파일 특성상 빈칸 개수를 중시해야하고 Tab을 쓰면 안된다는점
-# AfterInstall앞은 2칸이다.
   AfterInstall:
-# location은 프로젝트 기준으로 위치를 작성해준다!
     - location: /start.sh
-# runas를 입력해주지 않으면 간혹 permission error가 날 수도
       runas: root
