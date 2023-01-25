@@ -1,9 +1,16 @@
 version: 0.0
 os: linux
+
 files:
   - source: /
-    destination: /home/ubuntu/build
+    destination: /home/ubuntu/team5-server
+permissions:
+  - object: /home/ubuntu/team5-server
+    owner: ubuntu
+    group: ubuntu
+    mode: 755
 hooks:
   AfterInstall:
-    - location: /start.sh
+    - location: deploy.sh
+      timeout: 100
       runas: root
