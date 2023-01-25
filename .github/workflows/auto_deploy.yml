@@ -9,7 +9,7 @@ env:
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, test/auto-codedeploy ]
   pull_request: 
     branches: [ main, develop ]
         
