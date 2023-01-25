@@ -1,0 +1,41 @@
+# django.yml
+name: CI-CD pipeline to AWS
+env:
+  S3_BUCKET_NAME: "kream-waffle-api-bucket"
+  ENVIRONMENT_NAME: "venv"
+  DEPLOY_PACKAGE_NAME: "team5-server.zip"
+  AWS_REGION_NAME: "ap-northeast-2"
+  PROJECT_NMAE: "team5-server"
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request: 
+    branches: [ main, develop ]
+        
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git clone on our repo
+        uses: actions/checkout@v2
+      
+      - name: Create zip deployment package
+        run: zip -r ${{ env.DEPLOY_PACKAGE_NAME }} ./ -x *.git*
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.aws_access_key_id }}
+          aws-secret-access-key: ${{ secrets.aws_secret_access_key }}
+          aws-region: ${{ env.AWS_REGION_NAME }}
+        
+      - name: Copying file to S3
+        run: aws s3 cp ${{ env.DEPLOY_PACKAGE_NAME }} s3://${{ env.S3_BUCKET_NAME }}/
+        
+      - name: Code Deploy
+        run: aws deploy create-deployment 
+            --application-name kream-waffle-codedeploy
+            --deployment-config-name CodeDeployDefault.AllAtOnce  
+            --deployment-group-name kream-waffle-deploy-group
+            --s3-location bucket=${{ env.S3_BUCKET_NAME }},bundleType=zip,key=app/${{env.PROJECT_NAME}}/${{ env.DEPLOY_PACKAGE_NAME }}
