@@ -38,4 +38,4 @@ jobs:
             --application-name kream-waffle-codedeploy
             --deployment-config-name CodeDeployDefault.AllAtOnce  
             --deployment-group-name kream-waffle-deploy-group
-            --s3-location bucket=${{ env.S3_BUCKET_NAME }},bundleType=zip,key=${{env.PROJECT_NAME}}/${{ env.DEPLOY_PACKAGE_NAME }}
+            --s3-location bucket=${{ env.S3_BUCKET_NAME }},bundleType=zip,key=${{env.PROJECT_NAME}}${{ env.DEPLOY_PACKAGE_NAME }}
