@@ -1,3 +1,4 @@
+from django.db.models import ImageField
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -108,6 +109,7 @@ class PostSerializer(serializers.ModelSerializer):
         images = self.context['request'].FILES.getlist('image')
         # if not images:
         #     raise ValidationError('No image has been uploaded')
+
 
         for image in images:
             PostImage(post=instance, image=image).save()
