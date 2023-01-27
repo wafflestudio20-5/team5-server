@@ -54,7 +54,8 @@ class Reply(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='replies')
     comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='replies')
     content = models.CharField(max_length=100)
-    created_by = models.ForeignKey(Profile, on_delete=models.SET_NULL, related_name='replies', null=True)
+    to_profile = models.ForeignKey(Profile, on_delete=models.SET_NULL, related_name='replies_received', null=True)
+    created_by = models.ForeignKey(Profile, on_delete=models.SET_NULL, related_name='replies_created', null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

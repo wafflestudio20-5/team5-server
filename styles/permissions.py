@@ -1,6 +1,6 @@
 from rest_framework import permissions
 
-from styles.models import Profile, Post
+from styles.models import Profile, Post, Comment, Reply
 
 
 class IsProfileOwnerOrReadOnly(permissions.BasePermission):
@@ -12,8 +12,8 @@ class IsProfileOwnerOrReadOnly(permissions.BasePermission):
         )
 
 
-class IsPostWriterOrReadOnly(permissions.BasePermission):
-    def has_object_permission(self, request, view, obj: Post):
+class IsWriterOrReadOnly(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj: Post | Comment | Reply):
         return bool(
             request.method in permissions.SAFE_METHODS or
             request.user and request.user.is_authenticated and
