@@ -8,6 +8,7 @@ from rest_framework.response import Response
 
 from accounts.models import CustomUser
 from styles.models import Profile, Follow, Post, Comment, Reply, PostImage
+from styles.paginations import CustomCursorPagination
 from styles.serializers import ProfileSerializer, FollowerSerializer, FollowingSerializer, PostSerializer, \
     CommentSerializer
 from styles.permissions import IsProfileOwnerOrReadOnly, IsPostWriterOrReadOnly
@@ -39,27 +40,29 @@ class ProfileRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
 class FollowerListAPIView(generics.ListAPIView):
     serializer_class = FollowerSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = CustomCursorPagination
 
     def get_queryset(self):
         return Follow.objects.filter(to_profile__exact=self.kwargs.get('user_id'))
 
-    def get(self, request, *args, **kwargs):
-        followers = self.get_queryset()
-        serializer = self.serializer_class(followers, many=True, context={'request': self.request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
 
 
 class FollowingListAPIView(generics.ListAPIView):
     serializer_class = FollowingSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = CustomCursorPagination
 
     def get_queryset(self):
         return Follow.objects.filter(from_profile__exact=self.kwargs.get('user_id'))
 
-    def get(self, request, *args, **kwargs):
-        followings = self.get_queryset()
-        serializer = self.serializer_class(followings, many=True, context={'request': self.request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
 
 
 @api_view(['PATCH'])
@@ -84,6 +87,7 @@ class PostListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     parser_classes = [MultiPartParser, FormParser]
+    pagination_class = CustomCursorPagination
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -107,8 +111,9 @@ class PostListCreateAPIView(generics.ListCreateAPIView):
 
         if feed_type == 'latest':
             posts = self.get_queryset()
-            serializer = self.get_serializer(posts, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            page = self.paginate_queryset(posts)
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
 
         if feed_type == 'following':
             user: CustomUser = request.user
@@ -116,11 +121,11 @@ class PostListCreateAPIView(generics.ListCreateAPIView):
                 return JsonResponse({'message': 'login required'}, status=status.HTTP_401_UNAUTHORIZED)
 
             current_profile = Profile.objects.get(user=user)
-            posts = self.queryset.filter(
-                created_by__in=[follow_instance.to_profile for follow_instance in current_profile.followings.all()]
-            ).order_by('-created_at')
-            serializer = self.get_serializer(posts, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            posts = self.get_queryset().filter(
+                created_by__in=[follow_instance.to_profile for follow_instance in current_profile.followings.all()])
+            page = self.paginate_queryset(posts)
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
 
         if feed_type == 'default':
             user_id = self.request.query_params.get('user_id')
@@ -129,9 +134,10 @@ class PostListCreateAPIView(generics.ListCreateAPIView):
                                     status=status.HTTP_400_BAD_REQUEST)
 
             writer = get_object_or_404(Profile, pk=user_id)
-            posts = self.queryset.filter(created_by=writer)
-            serializer = self.get_serializer(posts, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            posts = self.get_queryset().filter(created_by=writer)
+            page = self.paginate_queryset(posts)
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
 
         return JsonResponse({'message': (
             'invalid query parameter "type"\n'

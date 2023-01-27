@@ -1,4 +1,3 @@
-from django.db.models import ImageField
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -29,13 +28,18 @@ class NestedProfileSerializer(serializers.ModelSerializer):
 
 class ProfileSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(max_length=None, use_url=True)
+    num_posts = serializers.SerializerMethodField()
     num_followers = serializers.SerializerMethodField()
     num_followings = serializers.SerializerMethodField()
 
     class Meta:
         model = Profile
-        fields = ['user_id', 'user_name', 'profile_name', 'introduction', 'image', 'num_followers', 'num_followings']
-        read_only_fields = ['user_id', 'image', 'num_followers', 'num_followings']
+        fields = ['user_id', 'user_name', 'profile_name', 'introduction', 'image', 'num_posts', 'num_followers',
+                  'num_followings']
+        read_only_fields = ['user_id', 'image', 'num_posts', 'num_followers', 'num_followings']
+
+    def get_num_posts(self, obj: Profile):
+        return obj.posts.count()
 
     def get_num_followers(self, obj: Profile):
         return obj.followers.count()
@@ -102,8 +106,8 @@ class PostSerializer(serializers.ModelSerializer):
         current_user: CustomUser = self.context['request'].user
         instance = Post.objects.create(**validated_data, created_by_id=current_user.id)
         images = self.context['request'].FILES.getlist('image')
-        if not images:
-            raise ValidationError('No image has been uploaded')
+        # if not images:
+        #     raise ValidationError('No image has been uploaded')
 
         for image in images:
             PostImage(post=instance, image=image).save()
