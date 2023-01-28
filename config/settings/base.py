@@ -159,7 +159,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = "static/"
-STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
@@ -243,7 +242,7 @@ EMAIL_HOST_USER = config_secret_common['EMAIL_HOST_USER']
 EMAIL_HOST_PASSWORD = config_secret_common['EMAIL_HOST_PASSWORD']
 EMAIL_USE_TLS = True  # TLS 보안 방법
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
+URL_FRONT = 'https://d2fvyynal80kjq.cloudfront.net/'
 REST_AUTH_SERIALIZERS = {
     'LOGIN_SERIALIZER': 'accounts.serializers.CustomLoginSerializer',
     'USER_DETAILS_SERIALIZER': 'accounts.serializers.CustomUserDetailsSerializer',

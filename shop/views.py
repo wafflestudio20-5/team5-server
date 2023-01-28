@@ -1,19 +1,25 @@
 from django.core.exceptions import FieldError
+from django.core.paginator import Paginator
 from django.http import JsonResponse
-from rest_framework import generics, viewsets
+from rest_framework import generics, viewsets, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
+from rest_framework.response import Response
 from rest_framework.views import APIView
 from shop.models import ProductInfo, Product, Wish, Brand, TransProduct, StoreProduct, ProductImage, PurchaseBid, \
-    SalesBid
-from shop.paginations import CustomPagination
-from shop.permissions import IsAdminUserOrReadOnly
+    SalesBid, TransOrder, Order, StoreOrder
+from shop.paginations import CustomPagination, CustomCursorPagination
+from shop.permissions import IsAdminUserOrReadOnly, IsOwner
 from shop.serializers import BrandSerializer, \
     TransProductDetailSerializer, StoreProductDetailSerializer, TransProductListSerializer, StoreProductListSerializer, \
-    TransSizeWishSerializer, StoreSizeWishSerializer, ProductInfoSerializer
-from django.db.models import Q, Prefetch
+    TransSizeWishSerializer, StoreSizeWishSerializer, ProductInfoSerializer, \
+    StoreOrderDetailSerializer, TransOrderDetailSerializer, \
+    PurchaseBidListSerializer, SalesBidListSerializer, PurchaseBidDetailSerializer, \
+    SalesBidDetailSerializer, OrderListSerializer, UserSalesBidListSerializer, UserPurchaseBidListSerializer
+from django.db.models import Q, Prefetch, Count
+
 
 # shows specific productinfo tag. superuser can update or destroy this product info.
 
@@ -36,25 +42,25 @@ class ProductInfoListCreateApiView(generics.ListCreateAPIView):
         category = self.request.query_params.getlist('category')
 
         if deltag:
-            queryset=queryset.filter(delivery_tag=deltag)
+            queryset = queryset.filter(delivery_tag=deltag)
         if brand_id:
             condition = Q()
             for id in brand_id:
-                    condition |= Q(brand__exact=id)
-            queryset=queryset.filter(condition)
+                condition |= Q(brand__exact=id)
+            queryset = queryset.filter(condition)
         if category:
             condition = Q()
             for c in category:
-                    condition |= Q(category__exact=c)
+                condition |= Q(category__exact=c)
             queryset = queryset.filter(condition)
         return queryset.prefetch_related(
-            'productimage_set','brand','share_set',
+            'productimage_set', 'brand', 'share_set',
             Prefetch('transproduct_set',
                      queryset=TransProduct.objects.select_related('product_ptr').prefetch_related('wish_set')
                      ),
             Prefetch('storeproduct_set',
                      queryset=StoreProduct.objects.select_related('product_ptr').prefetch_related('wish_set'))
-                     )
+        )
 
 
 # shows list of products according to productinfo.. can create new product for productinfo
@@ -159,15 +165,157 @@ def del_img(request, pk):
     }, status=204)
 
 
-class PurchaseBidViewSet(viewsets.ModelViewSet):
+class TransOrderCreateView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated, ]
+    serializer_class = TransOrderDetailSerializer
+
+    # type=purchase,sales
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        product = get_object_or_404(TransProduct, pk=self.kwargs['pk'])
+        transaction_type = self.request.query_params.get('type')
+        context.update({"transaction_type": transaction_type})
+        if transaction_type == 'purchase':
+            try:  # choose cheapest bid
+                bid = SalesBid.objects.filter(product=product)[0]
+            except:
+                raise ValidationError('no sales bid for purchase')
+        elif transaction_type == 'sales':
+            try:  # choose the most expensive bid
+                bid = PurchaseBid.objects.filter(product=product)[0]
+            except:
+                raise ValidationError('no purchase bid for sale')
+        else:
+            raise ValidationError('no such transaction_type')
+        context.update({"bid": bid})
+        context.update({"product": product})
+        context.update({"user": self.request.user})
+        return context
+
+
+class StoreOrderCreateView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated, ]
+    serializer_class = StoreOrderDetailSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        product = get_object_or_404(StoreProduct, pk=self.kwargs['pk'])
+        context.update({"product": product})
+        context.update({"user": self.request.user})
+        return context
+
+
+# type purchase, sales
+class OrderListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, ]
+    serializer_class = OrderListSerializer
+    pagination_class = CustomPagination
+
+    def get_queryset(self):
+        type = self.request.query_params.get('type')
+        user = self.request.user
+        if type == 'purchase':
+            transproducts=TransOrder.objects.filter(buyer=user).values_list('product').distinct()
+            storeproducts=StoreOrder.objects.filter(buyer=user).values_list('product').distinct()
+            return Order.objects.filter(product_id__in=list(transproducts)+list(storeproducts)).order_by('-created_at')
+        elif type == 'sales':
+            return Order.objects.filter(
+                product_id__in=TransOrder.objects.filter(seller=user).values_list(
+                    'product').distinct())
+        else:
+            raise ValidationError('no such type')
+
+
+class BidListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
+    pagination_class = CustomPagination
+
+    def get_serializer_class(self):
+        if self.request.query_params.get('type') == 'purchase':
+            return PurchaseBidListSerializer
+        elif self.request.query_params.get('type') == 'sales':
+            return SalesBidListSerializer
+        else:
+            raise ValidationError('no such type')
+
+    def get_queryset(self):
+        product = get_object_or_404(TransProduct, pk=self.kwargs['pk'])
+        if self.request.query_params.get('type') == 'purchase':
+            return PurchaseBid.objects.filter(product=product).values('price').annotate(
+                count=Count('price')).order_by('-price')
+        elif self.request.query_params.get('type') == 'sales':
+            return SalesBid.objects.filter(product=product).values('price').annotate(
+                count=Count('price')).order_by('price')
+        else:
+            raise ValidationError('no such type for bidding')
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        product = get_object_or_404(TransProduct, pk=self.kwargs['pk'])
+        context.update({"product": product})
+        context.update({"user": self.request.user})
+        return context
+
+
+class UserPurchaseBidListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    pagination_class = CustomPagination
+    serializer_class = UserPurchaseBidListSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        return PurchaseBid.objects.filter(user=user).order_by('-created_at')
+
+
+class UserSalesBidListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    pagination_class = CustomPagination
+    serializer_class = UserSalesBidListSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        return SalesBid.objects.filter(user=user).order_by('-created_at')
+
+
+class PurchaseBidRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = PurchaseBid.objects.all()
-    serializer_class =
-    permission_classes = [IsAdminUserOrReadOnly]
-    pagination_class = CustomPagination
+    serializer_class = PurchaseBidDetailSerializer
+    permission_classes =[IsOwner,]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        bid = get_object_or_404(PurchaseBid, pk=self.kwargs['pk'])
+        context.update({"product": bid.product})
+        return context
 
 
-class SalesBidViewSet(viewsets.ModelViewSet):
+class SalesBidRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = SalesBid.objects.all()
-    serializer_class =
-    permission_classes = [IsAdminUserOrReadOnly]
-    pagination_class = CustomPagination
+    serializer_class = SalesBidDetailSerializer
+    permission_classes = [IsOwner,]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        bid = get_object_or_404(SalesBid, pk=self.kwargs['pk'])
+        context.update({"product": bid.product})
+        return context
+
+
+# @api_view(['GET'])
+# @permission_classes((IsAuthenticated,))
+# def show_transorders(request, pk):
+#     product = get_object_or_404(TransProduct, pk=pk)
+#     transorders = TransOrder.objects.filter(product=product).order_by('-created_at')
+#
+#     if len(transorders) > 0:
+#         paginator = CustomCursorPagination()
+#         result_page = paginator.paginate_queryset(transorders, request)
+#         serializer = TransOrderListSerializer(result_page, many=True)
+#         return paginator.get_paginated_response(serializer.data)
+#
+#     else:
+#         return Response({}, status=status.HTTP_200_OK)
+
+
+
+
