@@ -1,6 +1,4 @@
-from django.db.models import ImageField
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 
 from accounts.models import CustomUser
 from styles.models import Follow, Profile, Post, Reply, Comment, PostImage
@@ -29,13 +27,18 @@ class NestedProfileSerializer(serializers.ModelSerializer):
 
 class ProfileSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(max_length=None, use_url=True)
+    num_posts = serializers.SerializerMethodField()
     num_followers = serializers.SerializerMethodField()
     num_followings = serializers.SerializerMethodField()
 
     class Meta:
         model = Profile
-        fields = ['user_id', 'user_name', 'profile_name', 'introduction', 'image', 'num_followers', 'num_followings']
-        read_only_fields = ['user_id', 'image', 'num_followers', 'num_followings']
+        fields = ['user_id', 'user_name', 'profile_name', 'introduction', 'image', 'num_posts', 'num_followers',
+                  'num_followings']
+        read_only_fields = ['user_id', 'image', 'num_posts', 'num_followers', 'num_followings']
+
+    def get_num_posts(self, obj: Profile):
+        return obj.posts.count()
 
     def get_num_followers(self, obj: Profile):
         return obj.followers.count()
@@ -83,7 +86,7 @@ class FollowingSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
-    images = serializers.ListSerializer(read_only=True, child=serializers.ImageField(max_length=None, use_url=True))
+    images = serializers.SerializerMethodField()
     created_by = NestedProfileSerializer(read_only=True)
     num_comments = serializers.SerializerMethodField()
 
@@ -92,6 +95,9 @@ class PostSerializer(serializers.ModelSerializer):
         fields = ['id', 'content', 'images', 'image_ratio', 'created_by', 'created_at', 'num_comments']
         read_only_fields = ['id', 'images', 'created_by', 'created_at', 'num_comments']
 
+    def get_images(self, obj: Post):
+        return [post_image.image.url for post_image in obj.images.all()]
+
     def get_num_comments(self, obj: Post):
         return obj.comments.count() + obj.replies.count()
 
@@ -99,8 +105,8 @@ class PostSerializer(serializers.ModelSerializer):
         current_user: CustomUser = self.context['request'].user
         instance = Post.objects.create(**validated_data, created_by_id=current_user.id)
         images = self.context['request'].FILES.getlist('image')
-        if not images:
-            raise ValidationError('No image has been uploaded')
+        # if not images:
+        #     raise ValidationError('No image has been uploaded')
 
         for image in images:
             PostImage(post=instance, image=image).save()
@@ -109,21 +115,53 @@ class PostSerializer(serializers.ModelSerializer):
 
 
 class ReplySerializer(serializers.ModelSerializer):
-    reply_id = serializers.PrimaryKeyRelatedField(read_only=True)
+    to_profile = serializers.PrimaryKeyRelatedField(queryset=Profile.objects.all())
     created_by = NestedProfileSerializer(read_only=True)
 
     class Meta:
         model = Reply
-        fields = ['reply_id', 'content', 'created_by', 'created_at']
-        read_only_fields = ['reply_id', 'content', 'created_by', 'created_at']
+        fields = ['id', 'content', 'to_profile', 'created_by', 'created_at']
+        read_only_fields = ['id', 'created_by', 'created_at']
+
+    def to_representation(self, instance: Reply):
+        representation = super().to_representation(instance)
+        return {
+            **representation,
+            'to_profile': {
+                'user_id': instance.to_profile.user_id,
+                'profile_name': instance.to_profile.profile_name
+            }
+        }
+
+    def create(self, validated_data):
+        current_user: CustomUser = self.context['request'].user
+        comment_id = self.context['comment_id']
+        post_id = Comment.objects.get(id=comment_id).post_id
+        instance = Reply.objects.create(**validated_data, post_id=post_id, comment_id=comment_id,
+                                        created_by_id=current_user.id)
+        return instance
 
 
-class CommentSerializer(serializers.ModelSerializer):
-    comment_id = serializers.PrimaryKeyRelatedField(read_only=True)
+class CommentListSerializer(serializers.ModelSerializer):
     created_by = NestedProfileSerializer(read_only=True)
     replies = ReplySerializer(many=True, read_only=True)
 
     class Meta:
         model = Comment
-        fields = ['comment_id', 'content', 'created_by', 'created_at', 'replies']
-        read_only_fields = ['comment_id', 'created_by', 'created_at']
+        fields = ['id', 'content', 'created_by', 'created_at', 'replies']
+        read_only_fields = ['id', 'created_by', 'created_at', 'replies']
+
+    def create(self, validated_data):
+        current_user: CustomUser = self.context['request'].user
+        instance = Comment.objects.create(**validated_data, post_id=self.context['post_id'],
+                                          created_by_id=current_user.id)
+        return instance
+
+
+class CommentDetailSerializer(serializers.ModelSerializer):
+    created_by = NestedProfileSerializer(read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'content', 'created_by', 'created_at']
+        read_only_fields = ['id', 'created_by', 'created_at']

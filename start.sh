@@ -1,0 +1,1 @@
+pwd>/home/ubuntu/location
