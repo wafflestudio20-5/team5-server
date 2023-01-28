@@ -86,7 +86,6 @@ class PostListCreateAPIView(generics.ListCreateAPIView):
     queryset = Post.objects.select_related('created_by').prefetch_related('images').all()
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
-    parser_classes = [MultiPartParser, FormParser]
     pagination_class = CommonCursorPagination
 
     def get_serializer_context(self):
@@ -160,6 +159,10 @@ class CommentListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = CommentListSerializer
     permission_classes = [IsAuthenticated]
 
+    def dispatch(self, request, *args, **kwargs):
+        get_object_or_404(Post, pk=self.kwargs.get('pk'))
+        return super().dispatch(request, *args, **kwargs)
+
     def get_queryset(self):
         return Comment.objects.select_related('created_by').prefetch_related('replies').filter(
             post_id__exact=self.kwargs.get('pk'))
@@ -186,6 +189,10 @@ class ReplyListCreateAPIView(generics.ListCreateAPIView):
     queryset = Reply.objects.select_related('created_by').all()
     serializer_class = ReplySerializer
     permission_classes = [IsAuthenticated]
+
+    def dispatch(self, request, *args, **kwargs):
+        get_object_or_404(Comment, pk=self.kwargs.get('pk'))
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         return Reply.objects.select_related('created_by').filter(
