@@ -8,10 +8,10 @@ from rest_framework.response import Response
 
 from accounts.models import CustomUser
 from styles.models import Profile, Follow, Post, Comment, Reply, PostImage
-from styles.paginations import CustomCursorPagination
+from styles.paginations import CommonCursorPagination
 from styles.serializers import ProfileSerializer, FollowerSerializer, FollowingSerializer, PostSerializer, \
-    CommentSerializer
-from styles.permissions import IsProfileOwnerOrReadOnly, IsPostWriterOrReadOnly
+    CommentListSerializer, CommentDetailSerializer, ReplySerializer
+from styles.permissions import IsProfileOwnerOrReadOnly, IsWriterOrReadOnly
 
 
 class ProfileListAPIView(generics.ListAPIView):
@@ -40,7 +40,7 @@ class ProfileRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
 class FollowerListAPIView(generics.ListAPIView):
     serializer_class = FollowerSerializer
     permission_classes = [IsAuthenticated]
-    pagination_class = CustomCursorPagination
+    pagination_class = CommonCursorPagination
 
     def get_queryset(self):
         return Follow.objects.filter(to_profile__exact=self.kwargs.get('user_id'))
@@ -54,7 +54,7 @@ class FollowerListAPIView(generics.ListAPIView):
 class FollowingListAPIView(generics.ListAPIView):
     serializer_class = FollowingSerializer
     permission_classes = [IsAuthenticated]
-    pagination_class = CustomCursorPagination
+    pagination_class = CommonCursorPagination
 
     def get_queryset(self):
         return Follow.objects.filter(from_profile__exact=self.kwargs.get('user_id'))
@@ -87,7 +87,7 @@ class PostListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     parser_classes = [MultiPartParser, FormParser]
-    pagination_class = CustomCursorPagination
+    pagination_class = CommonCursorPagination
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -110,8 +110,8 @@ class PostListCreateAPIView(generics.ListCreateAPIView):
             return JsonResponse({'message': 'not implemented yet'}, status=status.HTTP_400_BAD_REQUEST)
 
         if feed_type == 'latest':
-            posts = self.get_queryset()
-            page = self.paginate_queryset(posts)
+            queryset = self.get_queryset()
+            page = self.paginate_queryset(queryset)
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
@@ -121,9 +121,9 @@ class PostListCreateAPIView(generics.ListCreateAPIView):
                 return JsonResponse({'message': 'login required'}, status=status.HTTP_401_UNAUTHORIZED)
 
             current_profile = Profile.objects.get(user=user)
-            posts = self.get_queryset().filter(
+            queryset = self.get_queryset().filter(
                 created_by__in=[follow_instance.to_profile for follow_instance in current_profile.followings.all()])
-            page = self.paginate_queryset(posts)
+            page = self.paginate_queryset(queryset)
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
@@ -134,8 +134,8 @@ class PostListCreateAPIView(generics.ListCreateAPIView):
                                     status=status.HTTP_400_BAD_REQUEST)
 
             writer = get_object_or_404(Profile, pk=user_id)
-            posts = self.get_queryset().filter(created_by=writer)
-            page = self.paginate_queryset(posts)
+            queryset = self.get_queryset().filter(created_by=writer)
+            page = self.paginate_queryset(queryset)
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
@@ -148,7 +148,7 @@ class PostListCreateAPIView(generics.ListCreateAPIView):
 class PostRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Post.objects.select_related('created_by').prefetch_related('images').all()
     serializer_class = PostSerializer
-    permission_classes = [IsPostWriterOrReadOnly]
+    permission_classes = [IsWriterOrReadOnly]
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -157,9 +157,53 @@ class PostRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class CommentListCreateAPIView(generics.ListCreateAPIView):
-    serializer_class = CommentSerializer
+    serializer_class = CommentListSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Comment.objects.select_related('post', 'created_by').filter(post_id__exact=self.kwargs.get('post_id'))
+        return Comment.objects.select_related('created_by').prefetch_related('replies').filter(
+            post_id__exact=self.kwargs.get('pk'))
 
-# class ReplyRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        context['post_id'] = self.kwargs.get('pk')
+        return context
+
+
+class CommentRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Comment.objects.select_related('created_by').prefetch_related('replies').all()
+    serializer_class = CommentDetailSerializer
+    permission_classes = [IsAuthenticated & IsWriterOrReadOnly]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
+
+class ReplyListCreateAPIView(generics.ListCreateAPIView):
+    queryset = Reply.objects.select_related('created_by').all()
+    serializer_class = ReplySerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Reply.objects.select_related('created_by').filter(
+            comment_id__exact=self.kwargs.get('pk'))
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        context['comment_id'] = self.kwargs.get('pk')
+        return context
+
+
+class ReplyRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Reply.objects.select_related('created_by').all()
+    serializer_class = ReplySerializer
+    permission_classes = [IsAuthenticated & IsWriterOrReadOnly]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
