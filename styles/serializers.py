@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 
 from accounts.models import CustomUser
 from styles.models import Follow, Profile, Post, Reply, Comment, PostImage
