@@ -185,7 +185,6 @@ class CommentRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
 
 
 class ReplyListCreateAPIView(generics.ListCreateAPIView):
-    queryset = Reply.objects.select_related('created_by').all()
     serializer_class = ReplySerializer
     permission_classes = [IsAuthenticated]
 
