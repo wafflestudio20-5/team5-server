@@ -2,12 +2,11 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser
 from rest_framework.response import Response
 
 from accounts.models import CustomUser
-from styles.models import Profile, Follow, Post, Comment, Reply, PostImage
+from styles.models import Profile, Follow, Post, Comment, Reply
 from styles.paginations import CommonCursorPagination
 from styles.serializers import ProfileSerializer, FollowerSerializer, FollowingSerializer, PostSerializer, \
     CommentListSerializer, CommentDetailSerializer, ReplySerializer
