@@ -9,8 +9,8 @@ urlpatterns = [
     path('profiles/<int:user_id>/follow/', views.follow, name='follow/unfollow'),
     path('posts/', views.PostListCreateAPIView.as_view()),
     path('posts/<pk>/', views.PostRetrieveUpdateDestroyAPIView.as_view()),
-    path('posts/<pk>/comments/', views.CommentListCreateAPIView.as_view(), name='post-comment-list'),
-    path('comments/<pk>/', views.CommentListCreateAPIView.as_view(), name='post-comment-list'),
-    path('comments/<pk>/replies/', views.CommentListCreateAPIView.as_view(), name='post-comment-list'),
-    path('replies/<pk>/', views.CommentListCreateAPIView.as_view(), name='post-comment-list'),
+    path('posts/<pk>/comments/', views.CommentListCreateAPIView.as_view()),
+    path('comments/<pk>/', views.CommentRetrieveUpdateDestroyAPIView.as_view()),
+    path('comments/<pk>/replies/', views.ReplyListCreateAPIView.as_view()),
+    path('replies/<pk>/', views.ReplyRetrieveUpdateDestroyAPIView.as_view()),
 ]
