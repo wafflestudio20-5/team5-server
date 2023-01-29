@@ -1,16 +1,17 @@
+from django.contrib.contenttypes.models import ContentType
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser
-from rest_framework.response import Response
 
 from accounts.models import CustomUser
-from styles.models import Profile, Follow, Post, Comment, Reply
+from styles.exceptions import InvalidObjectTypeException
+from styles.models import Profile, Follow, Post, Comment, Reply, Like
 from styles.paginations import CommonCursorPagination
-from styles.serializers import ProfileSerializer, FollowerSerializer, FollowingSerializer, PostSerializer, \
-    CommentListSerializer, CommentDetailSerializer, ReplySerializer
 from styles.permissions import IsProfileOwnerOrReadOnly, IsWriterOrReadOnly
+from styles.serializers import ProfileSerializer, FollowerSerializer, FollowingSerializer, PostSerializer, \
+    CommentListSerializer, CommentDetailSerializer, ReplySerializer, LikeListSerializer
 
 
 class ProfileListAPIView(generics.ListAPIView):
@@ -76,6 +77,7 @@ def follow(request, **kwargs):
         follow_instance = Follow.objects.get(from_profile=from_profile, to_profile=to_profile)
         follow_instance.delete()
         return JsonResponse({'message': 'successfully unfollowed'}, status=status.HTTP_200_OK)
+
     except Follow.DoesNotExist:
         Follow.objects.create(from_profile=from_profile, to_profile=to_profile)
         return JsonResponse({'message': 'successfully followed'}, status=status.HTTP_200_OK)
@@ -157,6 +159,7 @@ class PostRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
 class CommentListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = CommentListSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = CommonCursorPagination
 
     def dispatch(self, request, *args, **kwargs):
         get_object_or_404(Post, pk=self.kwargs.get('pk'))
@@ -212,3 +215,45 @@ class ReplyRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
         context = super().get_serializer_context()
         context['request'] = self.request
         return context
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def like(request, **kwargs):
+    if kwargs['object_type'] == 'posts':
+        obj = get_object_or_404(Post, id=kwargs['object_id'])
+    elif kwargs['object_type'] == 'comments':
+        obj = get_object_or_404(Comment, id=kwargs['object_id'])
+    elif kwargs['object_type'] == 'replies':
+        obj = get_object_or_404(Reply, id=kwargs['object_id'])
+    else:
+        raise InvalidObjectTypeException()
+
+    profile = Profile.objects.get(user=request.user)
+    try:
+        like_instance = Like.objects.get(from_profile=profile, content_type=ContentType.objects.get_for_model(obj),
+                                         object_id=obj.id)
+        like_instance.delete()
+        return JsonResponse({'message': 'unliked successfully'}, status=status.HTTP_200_OK)
+
+    except Like.DoesNotExist:
+        Like.objects.create(from_profile=profile, content_type=ContentType.objects.get_for_model(obj), object_id=obj.id)
+        return JsonResponse({'message': 'liked successfully'}, status=status.HTTP_200_OK)
+
+
+class LikeListAPIView(generics.ListAPIView):
+    serializer_class = LikeListSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = CommonCursorPagination
+
+    def get_queryset(self):
+        if self.kwargs['object_type'] == 'posts':
+            obj = get_object_or_404(Post, id=self.kwargs['object_id'])
+        elif self.kwargs['object_type'] == 'comments':
+            obj = get_object_or_404(Comment, id=self.kwargs['object_id'])
+        elif self.kwargs['object_type'] == 'replies':
+            obj = get_object_or_404(Reply, id=self.kwargs['object_id'])
+        else:
+            raise InvalidObjectTypeException()
+
+        return obj.likes

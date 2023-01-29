@@ -1,9 +1,6 @@
 version: 0.0
 os: linux
 files:
-  - source: /
-    destination: /home/ubuntu/build
-hooks:
-  AfterInstall:
-    - location: /start.sh
-      runas: root
+  - source: / # CodeDeploy에서 전달해 준 파일 중 destination으로 이동시킬 대상 지정 ('/' 루트 파일은 전체파일을 의미)
+    destination: /home/ubuntu/teamt5-server/build # source에서 지정된 파일을 받을 위치
+    overwrite: yes # 기존 파일 덮어쓰기 허용
