@@ -3,16 +3,15 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser
 
 from accounts.models import CustomUser
+from styles.exceptions import InvalidObjectTypeException
 from styles.models import Profile, Follow, Post, Comment, Reply, Like
 from styles.paginations import CommonCursorPagination
 from styles.permissions import IsProfileOwnerOrReadOnly, IsWriterOrReadOnly
 from styles.serializers import ProfileSerializer, FollowerSerializer, FollowingSerializer, PostSerializer, \
     CommentListSerializer, CommentDetailSerializer, ReplySerializer, LikeListSerializer
-from styles.exceptions import InvalidObjectTypeException
 
 
 class ProfileListAPIView(generics.ListAPIView):
@@ -160,6 +159,7 @@ class PostRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
 class CommentListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = CommentListSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = CommonCursorPagination
 
     def dispatch(self, request, *args, **kwargs):
         get_object_or_404(Post, pk=self.kwargs.get('pk'))
@@ -231,13 +231,13 @@ def like(request, **kwargs):
 
     profile = Profile.objects.get(user=request.user)
     try:
-        like_instance = Like.objects.get(profile=profile, content_type=ContentType.objects.get_for_model(obj),
+        like_instance = Like.objects.get(from_profile=profile, content_type=ContentType.objects.get_for_model(obj),
                                          object_id=obj.id)
         like_instance.delete()
         return JsonResponse({'message': 'unliked successfully'}, status=status.HTTP_200_OK)
 
     except Like.DoesNotExist:
-        Like.objects.create(profile=profile, content_type=ContentType.objects.get_for_model(obj), object_id=obj.id)
+        Like.objects.create(from_profile=profile, content_type=ContentType.objects.get_for_model(obj), object_id=obj.id)
         return JsonResponse({'message': 'liked successfully'}, status=status.HTTP_200_OK)
 
 
