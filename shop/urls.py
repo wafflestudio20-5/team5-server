@@ -1,7 +1,12 @@
 from django.urls import path, re_path
+from rest_framework.routers import DefaultRouter
+
 from shop.views import BrandViewSet, WishCheckView, \
     SizeWishView, ProductInfoRetrieveUpdateDestroyApiView, show_img, del_img, \
-    ProductListCreateApiView, ProductRetrieveUpdateDestroyApiView, ProductInfoListCreateApiView
+    ProductListCreateApiView, ProductRetrieveUpdateDestroyApiView, ProductInfoListCreateApiView, TransOrderCreateView, \
+    StoreOrderCreateView, \
+    PurchaseBidRetrieveUpdateDestroyView, SalesBidRetrieveUpdateDestroyView, BidListCreateView, OrderListView, \
+    UserPurchaseBidListView, UserSalesBidListView
 
 urlpatterns = [
     re_path(r'^productinfos/(?P<info>\d+)/products/(?P<size>\d+)/$', ProductRetrieveUpdateDestroyApiView.as_view()),
@@ -23,4 +28,13 @@ urlpatterns = [
             'put': 'update',
             'delete': 'destroy'
         }), name='brand-view'),
+    path('products/<int:pk>/transorders/', TransOrderCreateView.as_view()),
+    path('products/<int:pk>/storeorders/', StoreOrderCreateView.as_view()),
+    path('products/<int:pk>/bids/', BidListCreateView.as_view()),
+    path('purchasebids/<int:pk>/', PurchaseBidRetrieveUpdateDestroyView.as_view()),
+    path('salesbids/<int:pk>/', SalesBidRetrieveUpdateDestroyView.as_view()),
+    path('orders/', OrderListView.as_view()),
+    path('purchasebids/', UserPurchaseBidListView.as_view()),
+    path('salesbids/', UserSalesBidListView.as_view())
 ]
+

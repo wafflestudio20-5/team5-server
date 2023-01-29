@@ -1,5 +1,7 @@
 from rest_framework import permissions
 
+from shop.models import SalesBid, PurchaseBid
+
 
 class IsAdminUserOrReadOnly(permissions.BasePermission):
     message = {'Error': 'If you are not a superuser, only reading is allowed'}
@@ -9,6 +11,13 @@ class IsAdminUserOrReadOnly(permissions.BasePermission):
             return True
         else:
             return request.user.is_superuser
+
+
+class IsOwner(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj:PurchaseBid | SalesBid):
+        if request.user.is_authenticated and obj.user == request.user:
+            return True
+        return False
 
 
 # class IsAuthenticatedOrReadInfo(permissions.BasePermission):
@@ -26,8 +35,5 @@ class IsAdminUserOrReadOnly(permissions.BasePermission):
 #             else:
 #                 return False
 #
-#     def has_object_permission(self, request, view, obj):
-#         if obj.size != 'ALL' and not request.user.is_authenticated:
-#             return False
-#         return True
+#     c
 

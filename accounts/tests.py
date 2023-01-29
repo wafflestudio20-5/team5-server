@@ -1,14 +1,8 @@
-from http.cookies import SimpleCookie
-from unittest import TestCase
-
-import jwt
 from django.core import mail
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from accounts.models import CustomUser
-from config.settings import base
-from config.settings.base import SECRET_KEY, SIMPLE_JWT
+
 
 
 class AccountTests(APITestCase):
@@ -37,7 +31,7 @@ class AccountTests(APITestCase):
         }
         response = self.client.post(self.register_url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.json()["detail"], "Verification e-mail sent.")
+        self.assertEqual(response.json()["detail"], "확인 이메일을 발송했습니다.")
 
         login_data = {
             'email': 'test@example.com',
@@ -48,15 +42,15 @@ class AccountTests(APITestCase):
         response = self.client.post(self.login_url, login_data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertTrue(
-            "E-mail is not verified." in response.json()["non_field_errors"]
+            '이메일 주소가 확인되지 않았습니다.' in response.json()["non_field_errors"]
         )
 
         #get the key from verification email
         self.assertEqual(len(mail.outbox), 1)
         email_lines = mail.outbox[0].body.splitlines()
         activation_line = [i for i in email_lines if "account-confirm-email" in i][0]
-        activation_link = activation_line.split("go to ")[1]
-        activation_key = activation_link.split("/")[7]
+        activation_link = activation_line.split("에서")[0]
+        activation_key = activation_link.split("/")[6]
 
         # Verify
         response = self.client.post(self.verify_email_url, {"key": activation_key})

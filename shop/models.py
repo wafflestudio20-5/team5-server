@@ -1,5 +1,8 @@
 from functools import partial
+
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Min, Max
 from django.dispatch import receiver
 from styles.models import Post
 from common.utils import get_media_path
@@ -12,7 +15,7 @@ CLOTHES_SIZE_CHOICES = [('ALL', 'ALL'), ('XXS', 'XXS'), ('XS', 'XS'), ('S', 'S')
                         ('XXXL', 'XXXL')] + \
                        [('{0}'.format(28 + i), '{0}'.format(28 + i)) for i in range(9)]
 
-CATECORY_CHOICES = [('shoes', 'shoes'), ('clothes', 'clothes'), ('fashion', 'fashion'), ('life', 'life'),
+CATEGORY_CHOICES = [('shoes', 'shoes'), ('clothes', 'clothes'), ('fashion', 'fashion'), ('life', 'life'),
                     ('tech', 'tech')]
 
 
@@ -28,25 +31,21 @@ class Brand(models.Model):
 
 class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
+    price = models.IntegerField()
+    product_engname = models.CharField(max_length=100)
+    size = models.CharField(choices=SHOE_SIZE_CHOICES + CLOTHES_SIZE_CHOICES, max_length=5, default='ALL')
+    product = models.ForeignKey('Product', on_delete=models.SET_NULL, null=True)
 
 
 class TransOrder(Order):
     buyer = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True, related_name='purchase_orders')
     seller = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True, related_name='sales_orders')
-    product = models.ForeignKey('Product', on_delete=models.SET_NULL, null=True)
     # added below in case the product is deleted
-    price = models.IntegerField()
-    product_engname = models.CharField(max_length=100)
-    size = models.CharField(choices=SHOE_SIZE_CHOICES + CLOTHES_SIZE_CHOICES, max_length=5, default='ALL')
 
 
 class StoreOrder(Order):
     store = models.ForeignKey(Brand, on_delete=models.SET_NULL, null=True)
     buyer = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True)
-    product = models.ForeignKey('Product', on_delete=models.SET_NULL, null=True)
-    price = models.IntegerField()
-    product_engname = models.CharField(max_length=100)
-    size = models.CharField(choices=SHOE_SIZE_CHOICES + CLOTHES_SIZE_CHOICES, max_length=5, default='ALL')
 
 
 class ProductInfo(models.Model):
@@ -56,7 +55,7 @@ class ProductInfo(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     shares = models.ManyToManyField(through='Share', to=Post)
     delivery_tag = models.CharField(choices=DELIVERY_CHOICES, max_length=12)
-    category = models.CharField(choices=CATECORY_CHOICES, max_length=10, null=True, default=None)
+    category = models.CharField(choices=CATEGORY_CHOICES, max_length=10, null=True, default=None)
 
     class Meta:
         ordering = ['id']
@@ -83,7 +82,7 @@ class TransProduct(Product):
 
 
 class StoreProduct(Product):
-    sales_price = models.IntegerField()
+    purchase_price = models.IntegerField()
     info = models.ForeignKey(ProductInfo, on_delete=models.CASCADE)
 
     class Meta:
@@ -109,11 +108,6 @@ class ProductImage(models.Model):
     image = models.ImageField(upload_to=partial(get_media_path, dir_name='shop'))
 
 
-@receiver(models.signals.post_delete, sender=ProductImage)
-def remove_file_from_s3(sender, instance, using, **kwargs):
-    instance.image.delete(save=False)
-
-
 class PurchaseBid(models.Model):
     product = models.ForeignKey(TransProduct, on_delete=models.CASCADE)
     price = models.IntegerField()
@@ -121,12 +115,18 @@ class PurchaseBid(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ('-price', 'created_at')
 
     def save(self, *args, **kwargs):
-        if self.product.purchase_price is None or self.price >= self.product.purchase_price:
-            self.product.purchase_price = self.price
-            super(PurchaseBid, self).save(*args, **kwargs)
+        if self.product.sales_price is None or self.price >= self.product.sales_price:
+            self.product.sales_price = self.price
+            self.product.save()
+            if self.product.size!='ALL':
+                modelproduct = self.product.info.transproduct_set.get(size='ALL')
+                if modelproduct.sales_price is None or modelproduct.sales_price <= self.price:
+                    modelproduct.sales_price = self.price
+                    modelproduct.save()
+        super(PurchaseBid, self).save(*args, **kwargs)
 
 
 class SalesBid(models.Model):
@@ -136,9 +136,15 @@ class SalesBid(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ('price', 'created_at')
 
     def save(self, *args, **kwargs):
-        if self.product.sales_price is None or self.price <= self.product.sales_price:
-            self.product.sales_price = self.price
-            super(SalesBid, self).save(*args, **kwargs)
+        if self.product.purchase_price is None or self.price <= self.product.purchase_price:
+            self.product.purchase_price = self.price
+            self.product.save()
+            if self.product.size != 'ALL':
+                modelproduct = self.product.info.transproduct_set.get(size='ALL')
+                if modelproduct.purchase_price is None or modelproduct.purchase_price >= self.price:
+                    modelproduct.purchase_price = self.price
+                    modelproduct.save()
+        super(SalesBid, self).save(*args, **kwargs)
