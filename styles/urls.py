@@ -1,4 +1,5 @@
 from django.urls import path
+
 from styles import views
 
 urlpatterns = [
@@ -13,4 +14,6 @@ urlpatterns = [
     path('comments/<pk>/', views.CommentRetrieveUpdateDestroyAPIView.as_view()),
     path('comments/<pk>/replies/', views.ReplyListCreateAPIView.as_view()),
     path('replies/<pk>/', views.ReplyRetrieveUpdateDestroyAPIView.as_view()),
+    path('<str:object_type>/<int:object_id>/like/', views.like, name='like/unlike'),
+    path('<str:object_type>/<int:object_id>/likes/', views.LikeListAPIView.as_view())
 ]

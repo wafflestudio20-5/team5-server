@@ -62,7 +62,7 @@ OTHER_TOOL_APPS = [
 ]
 
 INSTALLED_APPS = [
-                    "whitenoise.runserver_nostatic",
+                     "whitenoise.runserver_nostatic",
                      "django.contrib.admin",
                      "django.contrib.auth",
                      "django.contrib.contenttypes",
@@ -70,7 +70,7 @@ INSTALLED_APPS = [
                      "django.contrib.messages",
                      "django.contrib.staticfiles",
                      "django.contrib.sites",
-                    "debug_toolbar"
+                     "debug_toolbar"
                  ] + REST_FRAMEWORK_APPS + OTHER_TOOL_APPS + CUSTOM_APPS
 
 # depoy(DEBUG=False)일 때, static 파일 보여주는 용도
@@ -85,7 +85,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 MIDDLEWARE = [
                  "django.middleware.security.SecurityMiddleware",
-                "whitenoise.middleware.WhiteNoiseMiddleware",
+                 "whitenoise.middleware.WhiteNoiseMiddleware",
 
                  "django.contrib.sessions.middleware.SessionMiddleware",
                  "django.middleware.common.CommonMiddleware",
@@ -94,7 +94,7 @@ MIDDLEWARE = [
                  "django.contrib.messages.middleware.MessageMiddleware",
                  "django.middleware.clickjacking.XFrameOptionsMiddleware",
                  "corsheaders.middleware.CorsMiddleware",
-                'debug_toolbar.middleware.DebugToolbarMiddleware',
+                 'debug_toolbar.middleware.DebugToolbarMiddleware',
              ] + CUSTOM_MIDDLEWARE
 
 INTERNAL_IPS = [
