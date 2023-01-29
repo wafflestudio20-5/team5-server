@@ -28,7 +28,7 @@ class Follow(models.Model):
 
 
 class Like(models.Model):
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='likes')
+    from_profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='likes')
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')

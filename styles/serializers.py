@@ -3,6 +3,8 @@ from rest_framework import serializers
 from accounts.models import CustomUser
 from styles.models import Follow, Profile, Post, Reply, Comment, PostImage, Like
 
+from django.contrib.contenttypes.models import ContentType
+
 
 class NestedProfileSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(max_length=None, use_url=True)
@@ -105,6 +107,17 @@ class PostSerializer(serializers.ModelSerializer):
     def get_num_likes(self, obj: Post):
         return obj.likes.count()
 
+    def to_representation(self, instance: Post):
+        representation = super().to_representation(instance)
+        current_user: CustomUser = self.context['request'].user
+        if current_user.is_anonymous:
+            return {**representation, 'liked': 'login required'}
+
+        liked = Like.objects.filter(from_profile_id=current_user.id,
+                                    content_type=ContentType.objects.get_for_model(instance),
+                                    object_id=instance.id).exists()
+        return {**representation, 'liked': liked}
+
     def create(self, validated_data):
         current_user: CustomUser = self.context['request'].user
         instance = Post.objects.create(**validated_data, created_by_id=current_user.id)
@@ -133,13 +146,21 @@ class ReplySerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance: Reply):
         representation = super().to_representation(instance)
-        return {
+        representation = {
             **representation,
             'to_profile': {
                 'user_id': instance.to_profile.user_id,
                 'profile_name': instance.to_profile.profile_name
             }
         }
+        current_user: CustomUser = self.context['request'].user
+        if current_user.is_anonymous:
+            return {**representation, 'liked': 'login required'}
+
+        liked = Like.objects.filter(from_profile_id=current_user.id,
+                                    content_type=ContentType.objects.get_for_model(instance),
+                                    object_id=instance.id).exists()
+        return {**representation, 'liked': liked}
 
     def create(self, validated_data):
         current_user: CustomUser = self.context['request'].user
@@ -163,6 +184,17 @@ class CommentListSerializer(serializers.ModelSerializer):
     def get_num_likes(self, obj: Post):
         return obj.likes.count()
 
+    def to_representation(self, instance: Comment):
+        representation = super().to_representation(instance)
+        current_user: CustomUser = self.context['request'].user
+        if current_user.is_anonymous:
+            return {**representation, 'liked': 'login required'}
+
+        liked = Like.objects.filter(from_profile_id=current_user.id,
+                                    content_type=ContentType.objects.get_for_model(instance),
+                                    object_id=instance.id).exists()
+        return {**representation, 'liked': liked}
+
     def create(self, validated_data):
         current_user: CustomUser = self.context['request'].user
         instance = Comment.objects.create(**validated_data, post_id=self.context['post_id'],
@@ -180,9 +212,9 @@ class CommentDetailSerializer(serializers.ModelSerializer):
 
 
 class LikeListSerializer(serializers.ModelSerializer):
-    profile = NestedProfileSerializer(read_only=True)
+    from_profile = NestedProfileSerializer(read_only=True)
 
     class Meta:
         model = Like
-        fields = ['id', 'profile', 'created_at']
-        read_only_fields = ['id', 'profile', 'created_at']
+        fields = ['from_profile', 'created_at']
+        read_only_fields = ['from_profile', 'created_at']
