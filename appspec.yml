@@ -1,17 +1,6 @@
 version: 0.0
 os: linux
-permissions:
-  - object: /home/ubuntu/
-    owner: ubuntu
-    group: ubuntu
-    mode: 644
-    type:
-      - directory
-      - file
 files:
-  - source: ./
-    destination: /home/ubuntu/team5-server
-hooks:
-  AfterInstall:
-    - location: /start.sh
-      runas: root
+  - source: / # CodeDeploy에서 전달해 준 파일 중 destination으로 이동시킬 대상 지정 ('/' 루트 파일은 전체파일을 의미)
+    destination: /home/ubuntu/teamt5-server/build # source에서 지정된 파일을 받을 위치
+    overwrite: yes # 기존 파일 덮어쓰기 허용
