@@ -136,7 +136,7 @@ class BrandSerializer(serializers.ModelSerializer):
 class TransSizeWishSerializer(serializers.ModelSerializer):
     class Meta:
         model = TransProduct
-        fields = ['id', 'size', 'purchase_price']
+        fields = ['id', 'size', 'purchase_price', 'sales_price']
 
     def to_representation(self, instance):
         res = super().to_representation(instance)
@@ -173,7 +173,7 @@ class TransOrderDetailSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         product = self.context['product']
-        if product.size=='ALL':
+        if product.size == 'ALL' and product.info.transproduct_set.count()>1:
             raise serializers.ValidationError({
                 'size': 'cannot order ALL size products'
             })
@@ -203,7 +203,7 @@ class StoreOrderDetailSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         product = self.context['product']
-        if product.size == 'ALL':
+        if product.size == 'ALL' and product.info.transproduct_set.count()>1:
             raise serializers.ValidationError({
                 'size': 'cannot order ALL size products'
             })
@@ -236,7 +236,7 @@ class PurchaseBidListSerializer(serializers.ModelSerializer):
         product = self.context['product']
         user = self.context['user']
         price = int(data['price'])
-        if product.size == 'ALL':
+        if product.size == 'ALL' and product.info.transproduct_set.count()>1:
             raise serializers.ValidationError({
                 'size': 'cannot bid on ALL size products'
             })
@@ -261,7 +261,7 @@ class SalesBidListSerializer(serializers.ModelSerializer):
         product = self.context['product']
         user = self.context['user']
         price = int(data['price'])
-        if product.size == 'ALL':
+        if product.size == 'ALL' and product.info.transproduct_set.count()>1:
             raise serializers.ValidationError({
                 'size': 'cannot bid on ALL size products'
             })
@@ -285,10 +285,6 @@ class PurchaseBidDetailSerializer(serializers.ModelSerializer):
     def to_internal_value(self, data):
         product = self.context['product']
         price = data['price']
-        if product.size == 'ALL':
-            raise serializers.ValidationError({
-                'size': 'cannot bid on ALL size products'
-            })
         if self.context['product'].purchase_price and price >= self.context['product'].purchase_price:
             raise serializers.ValidationError(
                 {"price": "purchase bid should be less than the current purchase_price of "
@@ -308,10 +304,6 @@ class SalesBidDetailSerializer(serializers.ModelSerializer):
     def to_internal_value(self, data):
         product = self.context['product']
         price = data['price']
-        if product.size == 'ALL':
-            raise serializers.ValidationError({
-                'size': 'cannot bid on ALL size products'
-            })
         if self.context['product'].sales_price and price <= self.context['product'].sales_price:
             raise serializers.ValidationError({"price": "sales bid should be more than the current purchase_price of "
                                                         "the product."})

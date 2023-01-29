@@ -118,10 +118,10 @@ class PurchaseBid(models.Model):
         ordering = ('-price', 'created_at')
 
     def save(self, *args, **kwargs):
-        if self.product.size != 'ALL':
-            if self.product.sales_price is None or self.price >= self.product.sales_price:
-                self.product.sales_price = self.price
-                self.product.save()
+        if self.product.sales_price is None or self.price >= self.product.sales_price:
+            self.product.sales_price = self.price
+            self.product.save()
+            if self.product.size!='ALL':
                 modelproduct = self.product.info.transproduct_set.get(size='ALL')
                 if modelproduct.sales_price is None or modelproduct.sales_price <= self.price:
                     modelproduct.sales_price = self.price
@@ -139,10 +139,10 @@ class SalesBid(models.Model):
         ordering = ('price', 'created_at')
 
     def save(self, *args, **kwargs):
-        if self.product.size != 'ALL':
-            if self.product.purchase_price is None or self.price <= self.product.purchase_price:
-                self.product.purchase_price = self.price
-                self.product.save()
+        if self.product.purchase_price is None or self.price <= self.product.purchase_price:
+            self.product.purchase_price = self.price
+            self.product.save()
+            if self.product.size != 'ALL':
                 modelproduct = self.product.info.transproduct_set.get(size='ALL')
                 if modelproduct.purchase_price is None or modelproduct.purchase_price >= self.price:
                     modelproduct.purchase_price = self.price

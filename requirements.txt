@@ -11,6 +11,7 @@ coreapi==2.3.3
 coreschema==0.0.4
 cryptography==38.0.4
 defusedxml==0.7.1
+dj-inmemorystorage==2.1.0
 dj-rest-auth==2.2.5
 Django==4.1.4
 django-allauth==0.51.0
