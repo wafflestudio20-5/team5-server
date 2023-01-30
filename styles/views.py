@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser
 
 from accounts.models import CustomUser
-from styles.exceptions import InvalidObjectTypeException
+from config.exceptions import InvalidObjectTypeException
 from styles.models import Profile, Follow, Post, Comment, Reply, Like
 from styles.paginations import CommonCursorPagination
 from styles.permissions import IsProfileOwnerOrReadOnly, IsWriterOrReadOnly

@@ -1,27 +1,30 @@
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError
-from django.core.paginator import Paginator
 from django.http import JsonResponse
 from rest_framework import generics, viewsets, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
-from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
+
+from config.exceptions import InvalidObjectTypeException
 from shop.models import ProductInfo, Product, Wish, Brand, TransProduct, StoreProduct, ProductImage, PurchaseBid, \
-    SalesBid, TransOrder, Order, StoreOrder
-from shop.paginations import CustomPagination, CustomCursorPagination
-from shop.permissions import IsAdminUserOrReadOnly, IsOwner
+    SalesBid, TransOrder, Order, StoreOrder, Comment, Reply, Like
+from shop.paginations import CustomPagination, CommonCursorPagination
+from shop.permissions import IsAdminUserOrReadOnly, IsOwner, IsWriterOrReadOnly
 from shop.serializers import BrandSerializer, \
     TransProductDetailSerializer, StoreProductDetailSerializer, TransProductListSerializer, StoreProductListSerializer, \
     TransSizeWishSerializer, StoreSizeWishSerializer, ProductInfoSerializer, \
     StoreOrderDetailSerializer, TransOrderDetailSerializer, \
     PurchaseBidListSerializer, SalesBidListSerializer, PurchaseBidDetailSerializer, \
-    SalesBidDetailSerializer, OrderListSerializer, UserSalesBidListSerializer, UserPurchaseBidListSerializer
+    SalesBidDetailSerializer, OrderListSerializer, UserSalesBidListSerializer, UserPurchaseBidListSerializer, \
+    UserWishlistSerializer, CommentListSerializer, CommentDetailSerializer, ReplySerializer, LikeListSerializer
 from django.db.models import Q, Prefetch, Count
 
 
 # shows specific productinfo tag. superuser can update or destroy this product info.
+from styles.models import Profile
 
 
 class ProductInfoRetrieveUpdateDestroyApiView(generics.RetrieveUpdateDestroyAPIView):
@@ -301,21 +304,111 @@ class SalesBidRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         return context
 
 
-# @api_view(['GET'])
-# @permission_classes((IsAuthenticated,))
-# def show_transorders(request, pk):
-#     product = get_object_or_404(TransProduct, pk=pk)
-#     transorders = TransOrder.objects.filter(product=product).order_by('-created_at')
-#
-#     if len(transorders) > 0:
-#         paginator = CustomCursorPagination()
-#         result_page = paginator.paginate_queryset(transorders, request)
-#         serializer = TransOrderListSerializer(result_page, many=True)
-#         return paginator.get_paginated_response(serializer.data)
-#
-#     else:
-#         return Response({}, status=status.HTTP_200_OK)
+class UserWishlistView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserWishlistSerializer
+    pagination_class = CustomPagination
+
+    def get_queryset(self):
+        return Wish.objects.filter(user_id=self.request.user).select_related('user', 'product').order_by('-created_at')
 
 
+class CommentListCreateAPIView(generics.ListCreateAPIView):
+    serializer_class = CommentListSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = CommonCursorPagination
+
+    def dispatch(self, request, *args, **kwargs):
+        get_object_or_404(ProductInfo, pk=self.kwargs.get('pk'))
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return Comment.objects.select_related('created_by').prefetch_related('replies').filter(
+            info_id__exact=self.kwargs.get('pk'))
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        context['info_id'] = self.kwargs.get('pk')
+        return context
+
+
+class CommentRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Comment.objects.select_related('created_by').prefetch_related('replies').all()
+    serializer_class = CommentDetailSerializer
+    permission_classes = [IsAuthenticated & IsWriterOrReadOnly]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
+
+class ReplyListCreateAPIView(generics.ListCreateAPIView):
+    serializer_class = ReplySerializer
+    permission_classes = [IsAuthenticated]
+
+    def dispatch(self, request, *args, **kwargs):
+        get_object_or_404(Comment, pk=self.kwargs.get('pk'))
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return Reply.objects.select_related('created_by').filter(
+            comment_id__exact=self.kwargs.get('pk'))
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        context['comment_id'] = self.kwargs.get('pk')
+        return context
+
+
+class ReplyRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Reply.objects.select_related('created_by').all()
+    serializer_class = ReplySerializer
+    permission_classes = [IsAuthenticated & IsWriterOrReadOnly]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def like(request, **kwargs):
+    if kwargs['object_type'] == 'comments':
+        obj = get_object_or_404(Comment, id=kwargs['object_id'])
+    elif kwargs['object_type'] == 'replies':
+        obj = get_object_or_404(Reply, id=kwargs['object_id'])
+    else:
+        raise InvalidObjectTypeException()
+
+    profile = Profile.objects.get(user=request.user)
+    try:
+        like_instance = Like.objects.get(from_profile=profile, content_type=ContentType.objects.get_for_model(obj),
+                                         object_id=obj.id)
+        like_instance.delete()
+        return JsonResponse({'message': 'unliked successfully'}, status=status.HTTP_200_OK)
+
+    except Like.DoesNotExist:
+        Like.objects.create(from_profile=profile, content_type=ContentType.objects.get_for_model(obj), object_id=obj.id)
+        return JsonResponse({'message': 'liked successfully'}, status=status.HTTP_200_OK)
+
+
+class LikeListAPIView(generics.ListAPIView):
+    serializer_class = LikeListSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = CommonCursorPagination
+
+    def get_queryset(self):
+        if self.kwargs['object_type'] == 'comments':
+            obj = get_object_or_404(Comment, id=self.kwargs['object_id'])
+        elif self.kwargs['object_type'] == 'replies':
+            obj = get_object_or_404(Reply, id=self.kwargs['object_id'])
+        else:
+            raise InvalidObjectTypeException()
+
+        return obj.likes
 
 

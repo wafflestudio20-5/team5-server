@@ -1,11 +1,12 @@
-from django.contrib.auth import get_user_model
-from django.core.exceptions import FieldError
-from django.db.models import Count, Sum, Min
+from django.contrib.contenttypes.models import ContentType
+from django.db.models import Min
 from rest_framework import serializers
 import shop
 from accounts.models import CustomUser
 from shop.models import ProductInfo, Brand, Wish, TransProduct, StoreProduct, TransOrder, StoreOrder, PurchaseBid, \
-    SalesBid, Order
+    SalesBid, Order, Reply, Like, Comment
+from styles.models import Profile
+from styles.serializers import NestedProfileSerializer
 
 
 class ProductInfoSerializer(serializers.ModelSerializer):
@@ -324,4 +325,116 @@ class UserSalesBidListSerializer(serializers.ModelSerializer):
     class Meta:
         model = SalesBid
         fields = ['id', 'product', 'price', 'created_at']
+
+
+class UserWishlistSerializer(serializers.BaseSerializer):
+
+    def to_representation(self, instance):
+        product = instance.product
+        try:
+            info = product.transproduct.info
+            size = instance.product.transproduct.size
+            price = instance.product.transproduct.purchase_price
+        except:
+            info = product.storeproduct.info
+            size = instance.product.storeproduct.size
+            price = instance.product.storeproduct.purchase_price
+        return {
+            'product_id': product.id,
+            'brand_name': info.brand.name,
+            'eng_name': info.eng_name,
+            'size': size,
+            'price': price,
+            'created_at': instance.created_at
+        }
+
+
+class ReplySerializer(serializers.ModelSerializer):
+    to_profile = serializers.PrimaryKeyRelatedField(queryset=Profile.objects.all())
+    created_by = NestedProfileSerializer(read_only=True)
+    num_likes = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Reply
+        fields = ['id', 'content', 'to_profile', 'created_by', 'created_at', 'num_likes']
+        read_only_fields = ['id', 'created_by', 'created_at', 'num_likes']
+
+    def get_num_likes(self, obj: Reply):
+        return obj.likes.count()
+
+    def to_representation(self, instance: Reply):
+        representation = super().to_representation(instance)
+        representation = {
+            **representation,
+            'to_profile': {
+                'user_id': instance.to_profile.user_id,
+                'profile_name': instance.to_profile.profile_name
+            }
+        }
+        current_user: CustomUser = self.context['request'].user
+        if current_user.is_anonymous:
+            return {**representation, 'liked': 'login required'}
+
+        liked = Like.objects.filter(from_profile_id=current_user.id,
+                                    content_type=ContentType.objects.get_for_model(instance),
+                                    object_id=instance.id).exists()
+        return {**representation, 'liked': liked}
+
+    def create(self, validated_data):
+        current_user: CustomUser = self.context['request'].user
+        comment_id = self.context['comment_id']
+        info_id = Comment.objects.get(id=comment_id).info_id
+        instance = Reply.objects.create(**validated_data, info_id=info_id, comment_id=comment_id,
+                                        created_by_id=current_user.id)
+        return instance
+
+
+class CommentListSerializer(serializers.ModelSerializer):
+    created_by = NestedProfileSerializer(read_only=True)
+    replies = ReplySerializer(many=True, read_only=True)
+    num_likes = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'content', 'created_by', 'created_at', 'replies', 'num_likes']
+        read_only_fields = ['id', 'created_by', 'created_at', 'replies', 'num_likes']
+
+    def get_num_likes(self, obj: Comment):
+        return obj.likes.count()
+
+    def to_representation(self, instance: Comment):
+        representation = super().to_representation(instance)
+        current_user: CustomUser = self.context['request'].user
+        if current_user.is_anonymous:
+            return {**representation, 'liked': 'login required'}
+
+        liked = Like.objects.filter(from_profile_id=current_user.id,
+                                    content_type=ContentType.objects.get_for_model(instance),
+                                    object_id=instance.id).exists()
+        return {**representation, 'liked': liked}
+
+    def create(self, validated_data):
+        current_user: CustomUser = self.context['request'].user
+        instance = Comment.objects.create(**validated_data, info_id=self.context['info_id'],
+                                          created_by_id=current_user.id)
+        return instance
+
+
+class CommentDetailSerializer(serializers.ModelSerializer):
+    created_by = NestedProfileSerializer(read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'content', 'created_by', 'created_at']
+        read_only_fields = ['id', 'created_by', 'created_at']
+
+
+class LikeListSerializer(serializers.ModelSerializer):
+    from_profile = NestedProfileSerializer(read_only=True)
+
+    class Meta:
+        model = Like
+        fields = ['from_profile', 'created_at']
+        read_only_fields = ['from_profile', 'created_at']
+
 
