@@ -19,7 +19,7 @@ from shop.serializers import BrandSerializer, \
     StoreOrderDetailSerializer, TransOrderDetailSerializer, \
     PurchaseBidListSerializer, SalesBidListSerializer, PurchaseBidDetailSerializer, \
     SalesBidDetailSerializer, OrderListSerializer, UserSalesBidListSerializer, UserPurchaseBidListSerializer, \
-    UserWishlistSerializer, CommentListSerializer, CommentDetailSerializer, ReplySerializer, LikeListSerializer
+    UserWishlistSerializer, InfoCommentListSerializer, InfoCommentDetailSerializer, InfoReplySerializer, InfoLikeListSerializer
 from django.db.models import Q, Prefetch, Count
 
 
@@ -314,7 +314,7 @@ class UserWishlistView(generics.ListAPIView):
 
 
 class CommentListCreateAPIView(generics.ListCreateAPIView):
-    serializer_class = CommentListSerializer
+    serializer_class = InfoCommentListSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = CommonCursorPagination
 
@@ -335,7 +335,7 @@ class CommentListCreateAPIView(generics.ListCreateAPIView):
 
 class CommentRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Comment.objects.select_related('created_by').prefetch_related('replies').all()
-    serializer_class = CommentDetailSerializer
+    serializer_class = InfoCommentDetailSerializer
     permission_classes = [IsAuthenticated & IsWriterOrReadOnly]
 
     def get_serializer_context(self):
@@ -345,7 +345,7 @@ class CommentRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
 
 
 class ReplyListCreateAPIView(generics.ListCreateAPIView):
-    serializer_class = ReplySerializer
+    serializer_class = InfoReplySerializer
     permission_classes = [IsAuthenticated]
 
     def dispatch(self, request, *args, **kwargs):
@@ -365,7 +365,7 @@ class ReplyListCreateAPIView(generics.ListCreateAPIView):
 
 class ReplyRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Reply.objects.select_related('created_by').all()
-    serializer_class = ReplySerializer
+    serializer_class = InfoReplySerializer
     permission_classes = [IsAuthenticated & IsWriterOrReadOnly]
 
     def get_serializer_context(self):
@@ -397,7 +397,7 @@ def like(request, **kwargs):
 
 
 class LikeListAPIView(generics.ListAPIView):
-    serializer_class = LikeListSerializer
+    serializer_class = InfoLikeListSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = CommonCursorPagination
 
