@@ -141,7 +141,7 @@ class ReplySerializer(serializers.ModelSerializer):
         fields = ['id', 'content', 'to_profile', 'created_by', 'created_at', 'num_likes']
         read_only_fields = ['id', 'created_by', 'created_at', 'num_likes']
 
-    def get_num_likes(self, obj: Post):
+    def get_num_likes(self, obj: Reply):
         return obj.likes.count()
 
     def to_representation(self, instance: Reply):
@@ -181,7 +181,7 @@ class CommentListSerializer(serializers.ModelSerializer):
         fields = ['id', 'content', 'created_by', 'created_at', 'replies', 'num_likes']
         read_only_fields = ['id', 'created_by', 'created_at', 'replies', 'num_likes']
 
-    def get_num_likes(self, obj: Post):
+    def get_num_likes(self, obj: Comment):
         return obj.likes.count()
 
     def to_representation(self, instance: Comment):

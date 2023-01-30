@@ -5,7 +5,7 @@ class CustomPagination(PageNumberPagination):
     page_size = 40
 
 
-class CustomCursorPagination(CursorPagination):
-    page_size = 40
-    page_query_param = 'page'
+class CommonCursorPagination(CursorPagination):
+    # page_size = 20
+    page_size = 5
     ordering = '-created_at'

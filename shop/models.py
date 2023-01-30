@@ -1,11 +1,10 @@
 from functools import partial
 
-from django.core.exceptions import ValidationError
+from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.db.models import Min, Max
-from django.dispatch import receiver
-from styles.models import Post
-from common.utils import get_media_path
+from styles.models import Post, Profile
+from config.utils import get_media_path
 from django.contrib.auth import get_user_model
 
 DELIVERY_CHOICES = [('immediate', 'immediate'), ('brand', 'brand')]
@@ -96,6 +95,7 @@ class StoreProduct(Product):
 class Wish(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class Share(models.Model):
@@ -148,3 +148,33 @@ class SalesBid(models.Model):
                     modelproduct.purchase_price = self.price
                     modelproduct.save()
         super(SalesBid, self).save(*args, **kwargs)
+
+
+class Like(models.Model):
+    from_profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='pd_likes')
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, related_name='pd_likes')
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+
+class Comment(models.Model):
+    info = models.ForeignKey(ProductInfo, on_delete=models.CASCADE, related_name='comments')
+    content = models.CharField(max_length=100)
+    created_by = models.ForeignKey(Profile, on_delete=models.SET_NULL, related_name='pd_comments', null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    likes = GenericRelation(Like)
+
+
+class Reply(models.Model):
+    info = models.ForeignKey(ProductInfo, on_delete=models.CASCADE, related_name='replies')
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='replies')
+    content = models.CharField(max_length=100)
+    to_profile = models.ForeignKey(Profile, on_delete=models.SET_NULL, related_name='pd_replies_received', null=True)
+    created_by = models.ForeignKey(Profile, on_delete=models.SET_NULL, related_name='pd_replies_created', null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    likes = GenericRelation(Like)
+
