@@ -349,7 +349,7 @@ class UserWishlistSerializer(serializers.BaseSerializer):
         }
 
 
-class ReplySerializer(serializers.ModelSerializer):
+class InfoReplySerializer(serializers.ModelSerializer):
     to_profile = serializers.PrimaryKeyRelatedField(queryset=Profile.objects.all())
     created_by = NestedProfileSerializer(read_only=True)
     num_likes = serializers.SerializerMethodField()
@@ -389,9 +389,9 @@ class ReplySerializer(serializers.ModelSerializer):
         return instance
 
 
-class CommentListSerializer(serializers.ModelSerializer):
+class InfoCommentListSerializer(serializers.ModelSerializer):
     created_by = NestedProfileSerializer(read_only=True)
-    replies = ReplySerializer(many=True, read_only=True)
+    replies = InfoReplySerializer(many=True, read_only=True)
     num_likes = serializers.SerializerMethodField()
 
     class Meta:
@@ -420,7 +420,7 @@ class CommentListSerializer(serializers.ModelSerializer):
         return instance
 
 
-class CommentDetailSerializer(serializers.ModelSerializer):
+class InfoCommentDetailSerializer(serializers.ModelSerializer):
     created_by = NestedProfileSerializer(read_only=True)
 
     class Meta:
@@ -429,7 +429,7 @@ class CommentDetailSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_by', 'created_at']
 
 
-class LikeListSerializer(serializers.ModelSerializer):
+class InfoLikeListSerializer(serializers.ModelSerializer):
     from_profile = NestedProfileSerializer(read_only=True)
 
     class Meta:
