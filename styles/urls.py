@@ -17,3 +17,4 @@ urlpatterns = [
     path('<str:object_type>/<int:object_id>/like/', views.like, name='like/unlike'),
     path('<str:object_type>/<int:object_id>/likes/', views.LikeListAPIView.as_view())
 ]
+

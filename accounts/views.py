@@ -77,3 +77,14 @@ def _generate_tokens(user):
         'access_token': str(refresh.access_token),
         'refresh_token': str(refresh),
     }
+
+
+@api_view(['POST'])
+@permission_classes((permissions.IsAuthenticated,))
+def quit_user(request):
+    user = request.user
+    user.is_active = False
+    user.save()
+    return JsonResponse({
+        'message': 'User account is deactivated'
+    }, status=200)

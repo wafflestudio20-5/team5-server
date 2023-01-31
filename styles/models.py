@@ -5,7 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 from accounts.models import CustomUser
-from common.utils import get_media_path
+from config.utils import get_media_path
 
 
 class Profile(models.Model):

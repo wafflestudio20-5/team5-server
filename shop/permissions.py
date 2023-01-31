@@ -1,5 +1,7 @@
 from rest_framework import permissions
 
+from shop.models import SalesBid, PurchaseBid, Comment, Reply
+
 
 class IsAdminUserOrReadOnly(permissions.BasePermission):
     message = {'Error': 'If you are not a superuser, only reading is allowed'}
@@ -11,23 +13,18 @@ class IsAdminUserOrReadOnly(permissions.BasePermission):
             return request.user.is_superuser
 
 
-# class IsAuthenticatedOrReadInfo(permissions.BasePermission):
-#     message = {'Error': 'If you are not authenticated, you cannot see other sizes'}
-#
-#     def has_permission(self, request, view):
-#         if view.kwargs['size'] == 'ALL':
-#             if request.user.is_authenticated or (request.method in permissions.SAFE_METHODS):
-#                 return True
-#             else:
-#                 return False
-#         else:
-#             if request.user.is_authenticated:
-#                 return True
-#             else:
-#                 return False
-#
-#     def has_object_permission(self, request, view, obj):
-#         if obj.size != 'ALL' and not request.user.is_authenticated:
-#             return False
-#         return True
+class IsOwner(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj:PurchaseBid | SalesBid):
+        if request.user.is_authenticated and obj.user == request.user:
+            return True
+        return False
+
+
+class IsWriterOrReadOnly(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj: Comment | Reply):
+        return bool(
+            request.method in permissions.SAFE_METHODS or
+            request.user and request.user.is_authenticated and
+            request.user == obj.created_by.user
+        )
 
