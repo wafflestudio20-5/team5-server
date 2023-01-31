@@ -21,12 +21,12 @@ jobs:
             mkdir .config_secret
     - name: create-commonjson
       run: |
-            echo $COMMONCREDENTIALS | base64 -d >> ./config_secret/settings_common.json
+            echo $COMMONCREDENTIALS | base64 -d >> ./.config_secret/settings_common.json
       env:
             CREDENTIALS: ${{secrets.COMMONCREDENTIALS}}
     - name: create-debugjson
       run: |
-            echo $DEBUGCREDENTIALS | base64 -d >> ./config_secret/settings_debug.json
+            echo $DEBUGCREDENTIALS | base64 -d >> ./.config_secret/settings_debug.json
       env:
             CREDENTIALS: ${{secrets.DEBUGCREDENTIALS}}
     
