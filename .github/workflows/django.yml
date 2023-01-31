@@ -5,10 +5,10 @@ on:
     branches: [ main, develop]
   pull_request:
     branches: [ develop ]
+  workflow_dispatch:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 4
@@ -16,6 +16,20 @@ jobs:
         python-version: [3.10.x]
 
     steps:
+    - name: make-config-directory
+      run: |
+            mkdir .config_secret
+    - name: create-commonjson
+      run: |
+            echo $COMMONCREDENTIALS | base64 -d >> ./config_secret/settings_common.json
+      env:
+            CREDENTIALS: ${{secrets.COMMONCREDENTIALS}}
+    - name: create-debugjson
+      run: |
+            echo $DEBUGCREDENTIALS | base64 -d >> ./config_secret/settings_debug.json
+      env:
+            CREDENTIALS: ${{secrets.DEBUGCREDENTIALS}}
+    
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
@@ -27,4 +41,4 @@ jobs:
         pip install -r requirements.txt
     - name: Run Tests
       run: |
-        pytest
+        pytest --create-db
