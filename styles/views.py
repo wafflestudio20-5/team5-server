@@ -71,16 +71,16 @@ def follow(request, **kwargs):
     from_profile = Profile.objects.get(user=request.user)
     to_profile = get_object_or_404(Profile, pk=kwargs['user_id'])
     if from_profile == to_profile:
-        return JsonResponse({'message': 'cannot follow or unfollow oneself'}, status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({'detail': 'cannot follow or unfollow oneself'}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
         follow_instance = Follow.objects.get(from_profile=from_profile, to_profile=to_profile)
         follow_instance.delete()
-        return JsonResponse({'message': 'successfully unfollowed'}, status=status.HTTP_200_OK)
+        return JsonResponse({'detail': 'successfully unfollowed'}, status=status.HTTP_200_OK)
 
     except Follow.DoesNotExist:
         Follow.objects.create(from_profile=from_profile, to_profile=to_profile)
-        return JsonResponse({'message': 'successfully followed'}, status=status.HTTP_200_OK)
+        return JsonResponse({'detail': 'successfully followed'}, status=status.HTTP_200_OK)
 
 
 class PostListCreateAPIView(generics.ListCreateAPIView):
@@ -101,13 +101,13 @@ class PostListCreateAPIView(generics.ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         feed_type = self.request.query_params.get('type', None)
         if feed_type is None:
-            return JsonResponse({'message': (
+            return JsonResponse({'detail': (
                 'query parameter "type" required\n'
-                'the type should be one of: "popular", "latest", "following", and "default"\n'
+                'the type must be one of: "popular", "latest", "following", or "default"\n'
             )}, status=status.HTTP_400_BAD_REQUEST)
 
         if feed_type == 'popular':
-            return JsonResponse({'message': 'not implemented yet'}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({'detail': 'not implemented yet'}, status=status.HTTP_400_BAD_REQUEST)
 
         if feed_type == 'latest':
             queryset = self.get_queryset()
@@ -118,7 +118,7 @@ class PostListCreateAPIView(generics.ListCreateAPIView):
         if feed_type == 'following':
             user: CustomUser = request.user
             if user.is_anonymous:
-                return JsonResponse({'message': 'login required'}, status=status.HTTP_401_UNAUTHORIZED)
+                return JsonResponse({'detail': 'login required'}, status=status.HTTP_401_UNAUTHORIZED)
 
             current_profile = Profile.objects.get(user=user)
             queryset = self.get_queryset().filter(
@@ -130,7 +130,7 @@ class PostListCreateAPIView(generics.ListCreateAPIView):
         if feed_type == 'default':
             user_id = self.request.query_params.get('user_id')
             if user_id is None:
-                return JsonResponse({'message': 'query parameter "user_id" required for the default type'},
+                return JsonResponse({'detail': 'query parameter "user_id" required for the default type'},
                                     status=status.HTTP_400_BAD_REQUEST)
 
             writer = get_object_or_404(Profile, pk=user_id)
@@ -139,9 +139,9 @@ class PostListCreateAPIView(generics.ListCreateAPIView):
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
-        return JsonResponse({'message': (
+        return JsonResponse({'detail': (
             'invalid query parameter "type"\n'
-            'the type should be one of: "popular", "latest", "following", and "default"\n'
+            'the type must be one of: "popular", "latest", "following", or "default"\n'
         )}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -227,18 +227,18 @@ def like(request, **kwargs):
     elif kwargs['object_type'] == 'replies':
         obj = get_object_or_404(Reply, id=kwargs['object_id'])
     else:
-        raise InvalidObjectTypeException()
+        raise InvalidObjectTypeException(detail='the object type must be one of "posts", "comments", or "replies"')
 
     profile = Profile.objects.get(user=request.user)
     try:
         like_instance = Like.objects.get(from_profile=profile, content_type=ContentType.objects.get_for_model(obj),
                                          object_id=obj.id)
         like_instance.delete()
-        return JsonResponse({'message': 'unliked successfully'}, status=status.HTTP_200_OK)
+        return JsonResponse({'detail': 'unliked successfully'}, status=status.HTTP_200_OK)
 
     except Like.DoesNotExist:
         Like.objects.create(from_profile=profile, content_type=ContentType.objects.get_for_model(obj), object_id=obj.id)
-        return JsonResponse({'message': 'liked successfully'}, status=status.HTTP_200_OK)
+        return JsonResponse({'detail': 'liked successfully'}, status=status.HTTP_200_OK)
 
 
 class LikeListAPIView(generics.ListAPIView):
@@ -254,6 +254,6 @@ class LikeListAPIView(generics.ListAPIView):
         elif self.kwargs['object_type'] == 'replies':
             obj = get_object_or_404(Reply, id=self.kwargs['object_id'])
         else:
-            raise InvalidObjectTypeException()
+            raise InvalidObjectTypeException(detail='the object type must be one of "posts", "comments", or "replies"')
 
         return obj.likes
