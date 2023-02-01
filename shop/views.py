@@ -69,8 +69,8 @@ class ProductInfoListCreateApiView(generics.ListCreateAPIView):
                 p = p.split('-')
                 if not deltag or deltag == 'immediate':
                     condition = Q()
-                    condition &= Q(transproduct__purchase_price__gte=p[0]) if p[0] != '' else condition
-                    condition &= Q(transproduct__purchase_price__lte=p[1]) if p[1] != '' else condition
+                    condition &= Q(transproduct__size='ALL', transproduct__purchase_price__gte=p[0]) if p[0] != '' else condition
+                    condition &= Q(transproduct__size='ALL', transproduct__purchase_price__lte=p[1]) if p[1] != '' else condition
                     price_condition |= condition
                 if not deltag or deltag == 'brand':
                     condition = Q()
