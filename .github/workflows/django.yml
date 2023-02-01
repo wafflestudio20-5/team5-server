@@ -16,6 +16,8 @@ jobs:
         python-version: [3.10.x]
 
     steps:
+    
+    - uses: actions/checkout@v3
     - name: make-config-directory
       run: |
             mkdir .config_secret
@@ -29,8 +31,6 @@ jobs:
             echo $DEBUGCREDENTIALS | base64 -d >> ./.config_secret/settings_debug.json
       env:
             CREDENTIALS: ${{secrets.DEBUGCREDENTIALS}}
-    
-    - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
