@@ -37,7 +37,19 @@ SECRET_KEY = config_secret_common['django']['secret_key']
 ALLOWED_HOSTS = []
 
 # Application definition
-CUSTOM_APPS = [
+DJANGO_APPS = [
+    "whitenoise.runserver_nostatic",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.sites",
+    "debug_toolbar"
+]
+
+PROJECT_APPS = [
     'accounts.apps.AccountsConfig',
     'styles.apps.StylesConfig',
     'shop.apps.ShopConfig'
@@ -55,23 +67,14 @@ REST_FRAMEWORK_APPS = [
     "allauth.socialaccount",
 ]
 
-OTHER_TOOL_APPS = [
+THIRD_PARTY_APPS = [
     "drf_yasg",
     "phonenumber_field",
     "corsheaders",
+    "django_crontab"
 ]
 
-INSTALLED_APPS = [
-                     "whitenoise.runserver_nostatic",
-                     "django.contrib.admin",
-                     "django.contrib.auth",
-                     "django.contrib.contenttypes",
-                     "django.contrib.sessions",
-                     "django.contrib.messages",
-                     "django.contrib.staticfiles",
-                     "django.contrib.sites",
-                     "debug_toolbar"
-                 ] + REST_FRAMEWORK_APPS + OTHER_TOOL_APPS + CUSTOM_APPS
+INSTALLED_APPS = DJANGO_APPS + REST_FRAMEWORK_APPS + PROJECT_APPS + THIRD_PARTY_APPS
 
 # depoy(DEBUG=False)일 때, static 파일 보여주는 용도
 CUSTOM_MIDDLEWARE = [
@@ -263,3 +266,8 @@ AWS_S3_REGION_NAME = 'ap-northeast-2'
 AWS_S3_FILE_OVERWRITE = False
 AWS_DEFAULT_ACL = None
 AWS_S3_VERIFY = True
+
+# cron jobs
+CRONJOBS = [
+    ('0 0 * * *', 'django.core.management.call_command', ['flushexpiredtokens'], {'verbosity': 0})
+]
