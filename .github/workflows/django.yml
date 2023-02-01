@@ -10,6 +10,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    
     services:
       postgres:
         image: postgres:latest
@@ -32,21 +33,17 @@ jobs:
     - uses: actions/checkout@v3
     - name: make-config-directory
       run: |
-          mkdir .config_secret
+            mkdir .config_secret
     - name: create-commonjson
-      id: create-json-1
-      uses: jsdaniell/create-json@1.1.2
-      with:
-          name: "settings_common.json"
-          json: ${{ secrets.COMMONCREDENTIALS }}
-          dir: /.config_secret
+      run: |
+            echo $COMMONCREDENTIALS | base64 -d >> ./.config_secret/settings_common.json
+      env:
+            COMMONCREDENTIALS: ${{secrets.COMMONCREDENTIALS}}
     - name: create-debugjson
-      id: create-json-2
-      uses: jsdaniell/create-json@1.1.2
-      with:
-          name: "settings_debug.json"
-          json: ${{ secrets.DEBUGCREDENTIALS }}
-          dir: /.config_secret
+      run: |
+            echo $DEBUGCREDENTIALS | base64 -d >> ./.config_secret/settings_debug.json
+      env:
+            DEBUGCREDENTIALS: ${{secrets.DEBUGCREDENTIALS}}
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
