@@ -5,18 +5,49 @@ on:
     branches: [ main, develop]
   pull_request:
     branches: [ develop ]
+  workflow_dispatch:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: github_actions
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    
+    
     strategy:
       max-parallel: 4
       matrix:
         python-version: [3.10.x]
 
     steps:
+    
     - uses: actions/checkout@v3
+    - name: make-config-directory
+      run: |
+          mkdir .config_secret
+    - name: create-commonjson
+      id: create-json-1
+      uses: jsdaniell/create-json@1.1.2
+      with:
+          name: "settings_common.json"
+          json: ${{ secrets.COMMONCREDENTIALS }}
+          dir: /.config_secret
+    - name: create-debugjson
+      id: create-json-2
+      uses: jsdaniell/create-json@1.1.2
+      with:
+          name: "settings_debug.json"
+          json: ${{ secrets.DEBUGCREDENTIALS }}
+          dir: /.config_secret
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
@@ -27,4 +58,4 @@ jobs:
         pip install -r requirements.txt
     - name: Run Tests
       run: |
-        pytest
+        pytest --create-db
