@@ -1,3 +1,5 @@
+import re
+
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError
 from django.http import JsonResponse
@@ -19,9 +21,9 @@ from shop.serializers import BrandSerializer, \
     StoreOrderDetailSerializer, TransOrderDetailSerializer, \
     PurchaseBidListSerializer, SalesBidListSerializer, PurchaseBidDetailSerializer, \
     SalesBidDetailSerializer, OrderListSerializer, UserSalesBidListSerializer, UserPurchaseBidListSerializer, \
-    UserWishlistSerializer, InfoCommentListSerializer, InfoCommentDetailSerializer, InfoReplySerializer, InfoLikeListSerializer
+    UserWishlistSerializer, InfoCommentListSerializer, InfoCommentDetailSerializer, InfoReplySerializer, \
+    InfoLikeListSerializer
 from django.db.models import Q, Prefetch, Count
-
 
 # shows specific productinfo tag. superuser can update or destroy this product info.
 from styles.models import Profile
@@ -43,6 +45,8 @@ class ProductInfoListCreateApiView(generics.ListCreateAPIView):
         deltag = self.request.query_params.get('delivery_tag')
         brand_id = self.request.query_params.getlist('brand_id')
         category = self.request.query_params.getlist('category')
+        price = self.request.query_params.getlist('price')
+        final_condition = Q()
 
         if deltag:
             queryset = queryset.filter(delivery_tag=deltag)
@@ -50,13 +54,31 @@ class ProductInfoListCreateApiView(generics.ListCreateAPIView):
             condition = Q()
             for id in brand_id:
                 condition |= Q(brand__exact=id)
-            queryset = queryset.filter(condition)
+            final_condition &= condition
         if category:
             condition = Q()
             for c in category:
                 condition |= Q(category__exact=c)
-            queryset = queryset.filter(condition)
-        return queryset.prefetch_related(
+            final_condition &= condition
+        if price:
+            pattern = re.compile(r"^\d*-\d*$")
+            price_condition = Q()
+            for p in price:
+                if not pattern.match(p):
+                    raise ValidationError('price format is wrong')
+                p = p.split('-')
+                if not deltag or deltag == 'immediate':
+                    condition = Q()
+                    condition &= Q(transproduct__purchase_price__gte=p[0]) if p[0] != '' else condition
+                    condition &= Q(transproduct__purchase_price__lte=p[1]) if p[1] != '' else condition
+                    price_condition |= condition
+                if not deltag or deltag == 'brand':
+                    condition = Q()
+                    condition &= Q(storeproduct__purchase_price__gte=p[0]) if p[0] != '' else condition
+                    condition &= Q(storeproduct__purchase_price__lte=p[1]) if p[1] != '' else condition
+                    price_condition |= condition
+            final_condition &= price_condition
+        return queryset.filter(final_condition).distinct().prefetch_related(
             'productimage_set', 'brand', 'share_set',
             Prefetch('transproduct_set',
                      queryset=TransProduct.objects.select_related('product_ptr').prefetch_related('wish_set')
@@ -69,6 +91,7 @@ class ProductInfoListCreateApiView(generics.ListCreateAPIView):
 # shows list of products according to productinfo.. can create new product for productinfo
 class ProductListCreateApiView(generics.ListCreateAPIView):
     permission_classes = [IsAdminUserOrReadOnly]
+    pagination_class = CustomPagination
 
     def get_queryset(self):
         productinfo = get_object_or_404(ProductInfo, pk=self.kwargs['info'])
@@ -117,6 +140,7 @@ class WishCheckView(APIView):
 
 class SizeWishView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
+    pagination_class = CustomPagination
 
     def get_queryset(self):
         productinfo = get_object_or_404(ProductInfo, pk=self.kwargs['info'])
@@ -218,9 +242,10 @@ class OrderListView(generics.ListAPIView):
         type = self.request.query_params.get('type')
         user = self.request.user
         if type == 'purchase':
-            transproducts=TransOrder.objects.filter(buyer=user).values_list('product').distinct()
-            storeproducts=StoreOrder.objects.filter(buyer=user).values_list('product').distinct()
-            return Order.objects.filter(product_id__in=list(transproducts)+list(storeproducts)).order_by('-created_at')
+            transproducts = TransOrder.objects.filter(buyer=user).values_list('product').distinct()
+            storeproducts = StoreOrder.objects.filter(buyer=user).values_list('product').distinct()
+            return Order.objects.filter(product_id__in=list(transproducts) + list(storeproducts)).order_by(
+                '-created_at')
         elif type == 'sales':
             return Order.objects.filter(
                 product_id__in=TransOrder.objects.filter(seller=user).values_list(
@@ -283,7 +308,7 @@ class UserSalesBidListView(generics.ListAPIView):
 class PurchaseBidRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = PurchaseBid.objects.all()
     serializer_class = PurchaseBidDetailSerializer
-    permission_classes =[IsOwner,]
+    permission_classes = [IsOwner, ]
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -295,7 +320,7 @@ class PurchaseBidRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView
 class SalesBidRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = SalesBid.objects.all()
     serializer_class = SalesBidDetailSerializer
-    permission_classes = [IsOwner,]
+    permission_classes = [IsOwner, ]
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -410,5 +435,3 @@ class LikeListAPIView(generics.ListAPIView):
             raise InvalidObjectTypeException()
 
         return obj.likes
-
-

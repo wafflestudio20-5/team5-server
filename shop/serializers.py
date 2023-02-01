@@ -11,6 +11,8 @@ from styles.serializers import NestedProfileSerializer
 
 class ProductInfoSerializer(serializers.ModelSerializer):
     productimage_set = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    productimage_urls = serializers.SerializerMethodField()
+    brand_name = serializers.SerializerMethodField()
     price = serializers.SerializerMethodField()
     wishes = serializers.SerializerMethodField()
     shares = serializers.SerializerMethodField()
@@ -18,7 +20,13 @@ class ProductInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductInfo
         fields = ['id', 'brand', 'eng_name', 'kor_name', 'delivery_tag', 'productimage_set', 'price', 'shares',
-                  'wishes']
+                  'wishes', 'brand_name', 'productimage_urls']
+
+    def get_productimage_urls(self, obj: ProductInfo):
+        return [pd_image.image.url for pd_image in obj.productimage_set.all()]
+
+    def get_brand_name(self, obj: ProductInfo):
+        return obj.brand.name
 
     def get_price(self, obj: ProductInfo):
         if obj.delivery_tag == 'immediate':

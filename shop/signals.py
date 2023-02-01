@@ -1,8 +1,8 @@
 from django.db.models import Min, Max
 from django.dispatch import receiver
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_delete, post_save
 
-from shop.models import SalesBid, TransProduct, PurchaseBid, ProductImage
+from shop.models import SalesBid, TransProduct, PurchaseBid, ProductImage, StoreProduct
 
 
 @receiver(post_delete, sender=ProductImage)
