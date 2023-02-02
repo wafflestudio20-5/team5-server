@@ -14,12 +14,12 @@ from accounts.serializers import CustomUserDetailsSerializer
 def google_auth(request):
     access_token = request.GET.get('token', None)
     if access_token is None:
-        return JsonResponse({'message': 'query parameter "token" required'}, status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({'detail': 'query parameter "token" required'}, status=status.HTTP_400_BAD_REQUEST)
 
     user_req = requests.get(f"https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={access_token}")
     user_req_status = user_req.status_code
     if user_req_status != status.HTTP_200_OK:
-        return JsonResponse({'message': 'failed to get user information'}, status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({'detail': 'failed to get user information'}, status=status.HTTP_400_BAD_REQUEST)
 
     user_req_json = user_req.json()
     email = user_req_json['email']
@@ -31,13 +31,13 @@ def google_auth(request):
 def naver_auth(request):
     access_token = request.GET.get('token', None)
     if access_token is None:
-        return JsonResponse({'message': 'query parameter "token" required'}, status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({'detail': 'query parameter "token" required'}, status=status.HTTP_400_BAD_REQUEST)
 
     user_req = requests.get(url="https://openapi.naver.com/v1/nid/me",
                             headers={"Authorization": f"Bearer {access_token}"})
     user_req_status = user_req.status_code
     if user_req_status != status.HTTP_200_OK:
-        return JsonResponse({'message': 'failed to get user information'}, status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({'detail': 'failed to get user information'}, status=status.HTTP_400_BAD_REQUEST)
 
     user_req_json = user_req.json()
     email = user_req_json['response']['email']
@@ -86,5 +86,5 @@ def quit_user(request):
     user.is_active = False
     user.save()
     return JsonResponse({
-        'message': 'User account is deactivated'
+        'detail': 'User account is deactivated'
     }, status=200)
