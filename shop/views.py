@@ -13,7 +13,7 @@ from rest_framework.views import APIView
 from config.exceptions import InvalidObjectTypeException
 from shop.models import ProductInfo, Product, Wish, Brand, TransProduct, StoreProduct, ProductImage, PurchaseBid, \
     SalesBid, TransOrder, Order, StoreOrder, Comment, Reply, Like
-from shop.paginations import CustomPagination, CommonCursorPagination, RecentCursorPagination
+from shop.paginations import CustomPagination, CommonCursorPagination
 from shop.permissions import IsAdminUserOrReadOnly, IsOwner, IsWriterOrReadOnly
 from shop.serializers import BrandSerializer, \
     TransProductDetailSerializer, StoreProductDetailSerializer, TransProductListSerializer, StoreProductListSerializer, \
