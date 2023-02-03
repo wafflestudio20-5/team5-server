@@ -165,7 +165,7 @@ class CommentListCreateAPIView(generics.ListCreateAPIView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
-        return Comment.objects.select_related('created_by').prefetch_related('replies').filter(
+        return Comment.objects.select_related('created_by').order_by('created_at').prefetch_related('replies').filter(
             post_id__exact=self.kwargs.get('pk'))
 
     def get_serializer_context(self):

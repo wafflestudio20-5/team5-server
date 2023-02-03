@@ -7,7 +7,3 @@ class CommonCursorPagination(CursorPagination):
     ordering = '-created_at'
 
 
-class RecentCursorPagination(CursorPagination):
-    # page_size = 20
-    page_size = 5
-    ordering = 'created_at'
