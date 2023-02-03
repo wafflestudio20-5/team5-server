@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from accounts.models import CustomUser
 from config.exceptions import InvalidObjectTypeException
 from styles.models import Profile, Follow, Post, Comment, Reply, Like
-from styles.paginations import CommonCursorPagination
+from styles.paginations import CommonCursorPagination, RecentCursorPagination
 from styles.permissions import IsProfileOwnerOrReadOnly, IsWriterOrReadOnly
 from styles.serializers import ProfileSerializer, FollowerSerializer, FollowingSerializer, PostSerializer, \
     CommentListSerializer, CommentDetailSerializer, ReplySerializer, LikeListSerializer
@@ -159,7 +159,7 @@ class PostRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
 class CommentListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = CommentListSerializer
     permission_classes = [IsAuthenticated]
-    pagination_class = CommonCursorPagination
+    pagination_class = RecentCursorPagination
 
     def dispatch(self, request, *args, **kwargs):
         get_object_or_404(Post, pk=self.kwargs.get('pk'))

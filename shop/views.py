@@ -13,7 +13,7 @@ from rest_framework.views import APIView
 from config.exceptions import InvalidObjectTypeException
 from shop.models import ProductInfo, Product, Wish, Brand, TransProduct, StoreProduct, ProductImage, PurchaseBid, \
     SalesBid, TransOrder, Order, StoreOrder, Comment, Reply, Like
-from shop.paginations import CustomPagination, CommonCursorPagination
+from shop.paginations import CustomPagination, CommonCursorPagination, RecentCursorPagination
 from shop.permissions import IsAdminUserOrReadOnly, IsOwner, IsWriterOrReadOnly
 from shop.serializers import BrandSerializer, \
     TransProductDetailSerializer, StoreProductDetailSerializer, TransProductListSerializer, StoreProductListSerializer, \
@@ -341,7 +341,7 @@ class UserWishlistView(generics.ListAPIView):
 class CommentListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = InfoCommentListSerializer
     permission_classes = [IsAuthenticated]
-    pagination_class = CommonCursorPagination
+    pagination_class = RecentCursorPagination
 
     def dispatch(self, request, *args, **kwargs):
         get_object_or_404(ProductInfo, pk=self.kwargs.get('pk'))

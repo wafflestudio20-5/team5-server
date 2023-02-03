@@ -85,15 +85,14 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 MIDDLEWARE = [
                  "django.middleware.security.SecurityMiddleware",
+                "corsheaders.middleware.CorsMiddleware",
                  "whitenoise.middleware.WhiteNoiseMiddleware",
-
                  "django.contrib.sessions.middleware.SessionMiddleware",
                  "django.middleware.common.CommonMiddleware",
                  "django.middleware.csrf.CsrfViewMiddleware",
                  "django.contrib.auth.middleware.AuthenticationMiddleware",
                  "django.contrib.messages.middleware.MessageMiddleware",
                  "django.middleware.clickjacking.XFrameOptionsMiddleware",
-                 "corsheaders.middleware.CorsMiddleware",
                  'debug_toolbar.middleware.DebugToolbarMiddleware',
              ] + CUSTOM_MIDDLEWARE
 
@@ -105,7 +104,7 @@ INTERNAL_IPS = [
 CORS_ORIGIN_WHITELIST = [
     'http://127.0.0.1:3000',
     'http://localhost:3000',
-    'https://d2fvyynal80kjq.cloudfront.net/',
+    'https://d2fvyynal80kjq.cloudfront.net',
 ]
 
 CORS_ALLOW_CREDENTIALS = True
