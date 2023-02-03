@@ -4,7 +4,7 @@
 #
 
 
-### 🧑🏻‍💻 Contributors 
+## 🧑🏻‍💻 Contributors 
 | Contributor | Major Contribution |
 | ------ | ------ |
 | **Yoonsuh Chung** | Basic authorization & authentication / Shop App / Test CI |
@@ -14,7 +14,7 @@
 안녕하세요, 저희는 와플 20.5기 토이프로젝트 Team 5의 장고 팀입니다:)
 KREAM이라는 중고거래 플랫폼을 클론코딩하여, 필수기능에 따라 크게 `Accounts` 앱과 `Shop` 앱, `Style` 앱을 구현해 보았습니다.
 #
-### 💻 기술 스택
+## 💻 기술 스택
 ```
 웹 프레임워크: Django 4.1.4, Django Rest Framework 3.14.0
 언어: Python 3.10.6
@@ -23,16 +23,11 @@ KREAM이라는 중고거래 플랫폼을 클론코딩하여, 필수기능에 따
 WSGI: gunicorn
 RDS: PostGreSQL
 ```
-
-### 🪡 ERD(feat. graph_models)
-
-
-내용
 #
-### ✨ Essence of our Project
+## ✨ Essence of our Project
 : 클론 코딩을 진행하면서 신경 썼던, 혹은 잘 되었다고 생각하는 부분은?
 #
-#### 📌 Accounts App
+### 📌 Accounts App
 - **기본 회원가입/로그인**
   - 써드파티 라이브러리인 `dj_rest_auth`를 활용
   - 토큰 인증을 위해 플러그인인 `djangorestframework-simplejwt` 사용
@@ -47,7 +42,7 @@ RDS: PostGreSQL
 #
 - **소셜 로그인**
 
-#### 📌 Shop App
+### 📌 Shop App
 - **상품 모델링**
   - 하나의 상품은 여러 가지 사이즈의 상품들로 나뉘고, 1:1 거래 상품의 경우 여러 가지 사이즈의 상품이 서로 다른 가격을 가질 수 있음.
     - 상품의 원형이 되는 모델인 ProductInfo 생성
@@ -72,7 +67,7 @@ RDS: PostGreSQL
   - 이미지들을 S3에 업로드하기 위해 `django-storages`의 S3Boto3Storage를 사용하고 있었기 때문에, 관련 api들을 테스트하기 위한 storage backend로  `dj-inmemorystorage' 패키지 활용.
   - Github Action의 Django CI 활용.
 #
-#### 📌 Style App
+### 📌 Style App
 
 - 유저 정보를 불러오는 **가벼운** 요청과 유저의 팔로워 목록, 팔로잉 목록, 게시물 목록 각각을 불러오는 **무거운** 요청을 받아들이는 URI 분리. 게시물/댓글/대댓글 정보와 그에 공감한 유저 목록에 대한 URI도 역시 분리함.
     - `GET /styles/profiles/{id}/`
@@ -229,14 +224,14 @@ query param이 없거나, 유효하지 않은 경우 `HTTP_400_BAD_REQUEST` 를 
     > ```
     >
 #
-#### 📌 Deployment
+### 📌 Deployment
 ##### AWS: EC2, RDS, S3, CodeDeploy
 사용 이유: 
 장고 세미나에서는 Render.com(Paas)를 사용해서 굉장히 편안하게 배포를 진행할 수 있었는데, Iaas인 AWS 상에서 직접 하나하나 세팅해보고 싶어서 EC2와 RDS를 사용하게 되었습니다.
 신경 쓴 부분: 
 1) RDS와 EC2 사이의 네트워크 외에도 개발 시 서버에 백엔드 팀원들이 접속할 수 있게 세팅하였습니다.
 2) RDS를 연결해서 볼 때 IDE 외에 pgAdmin을 이용해 테이블 확인 및 row 편집이 가능하도록 하였습니다.
-3) S3?
+3) `django-storages`의 S3Boto3Storage를 통해 ImageField가 S3으로 업로드될 수 있도록 하였습니다.
 
 아직 해결중인 부분:
 1) AWS CodeDeploy를 사용해보려고 했으나 S3까지 업로드 후 CodeDeploy를 이용해 업로드가 이루어지지 않아 수동 배포를 진행하고 있습니다.
