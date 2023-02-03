@@ -159,7 +159,6 @@ class PostRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
 class CommentListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = CommentListSerializer
     permission_classes = [IsAuthenticated]
-    pagination_class = CommonCursorPagination
 
     def dispatch(self, request, *args, **kwargs):
         get_object_or_404(Post, pk=self.kwargs.get('pk'))
