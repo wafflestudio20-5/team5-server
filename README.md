@@ -37,6 +37,7 @@ RDS: PostGreSQL
   - 써드파티 라이브러리인 `dj_rest_auth`를 활용
   - 토큰 인증을 위해 플러그인인 `djangorestframework-simplejwt` 사용
   - 로그인과 회원가입을 커스터마이징하기 위해 플러그인인 `django-allauth` 활용
+#
 - 로그아웃
   - JWT 토큰을 따로 디비에 저장하고 있지 않았기 때문에, 로그아웃 시에 비교적 만료기간이 긴 refresh token을 blacklist 처리해주는 수단이 필요하였음
     - `rest_framework_simplejwt.token_blacklist` 활용
@@ -45,7 +46,7 @@ RDS: PostGreSQL
     - 커스텀 Middleware인 `MoveJWTRefreshCookieIntoTheBody`를 통해 요청의 쿠키에 담긴 refresh token을 body로 옮겨주는 작업을 통해 문제 해결
 #
 - 소셜 로그인
-#
+
 #### 2. Shop App
 - 상품 모델링
   - 하나의 상품은 여러 가지 사이즈의 상품들로 나뉘고, 1:1 거래 상품의 경우 여러 가지 사이즈의 상품이 서로 다른 가격을 가질 수 있음.
