@@ -20,6 +20,7 @@ KREAM이라는 중고거래 플랫폼을 클론코딩하여, 필수기능에 따
 언어: Python 3.10.6
 배포환경: AWS EC2, AWS S3
 웹 서버: NginX
+WSGI: gunicorn
 RDS: PostGreSQL
 ```
 
@@ -32,7 +33,16 @@ RDS: PostGreSQL
 : 클론 코딩을 진행하면서 신경 썼던, 혹은 잘 되었다고 생각하는 부분은?
 #
 #### 1. Accounts App
-내용
+- 기본 회원가입/로그인
+  - 써드파티 라이브러리인 `dj_rest_auth`를 활용
+  - 토큰 인증을 위해 플러그인인 `djangorestframework-simplejwt` 사용
+  - 로그인과 회원가입을 커스터마이징하기 위해 플러그인인 `django-allauth` 활용
+- 로그아웃
+  - JWT 토큰을 따로 디비에 저장하고 있지 않았기 때문에, 로그아웃 시에 비교적 만료기간이 긴 refresh token을 blacklist 처리해주는 수단이 필요하였음
+    - `rest_framework_simplejwt.token_blacklist` 활용
+  - api endpoint로는 dj_rest_auth에서 제공하는 로그아웃 api를 활용함. 이때 dj_rest_auth는 로컬의 쿠키를 지워주고 쿠키로 담겨온 토큰을 블랙리스트 처리해야 하나, 쿠키를 인식하지 못하는 문제 발생
+    - `djangorestframework-simplejwt`에서 쿠키로 담겨오는 토큰을 허용하지 않는다는 이슈 발견
+    - 커스텀 Middleware인 `MoveJWTRefreshCookieIntoTheBody`를 통해 요청의 쿠키에 담긴 refresh token을 body로 옮겨주는 작업을 통해 문제 해결
 #
 #### 2. Shop App
 내용
@@ -43,7 +53,7 @@ RDS: PostGreSQL
 #### 4. Deployment
 ##### AWS: EC2, RDS, S3, CodeDeploy
 사용 이유: 
-장고 세미나에서는 Heroku(Saas)를 사용해서 굉장히 편안하게 배포를 진행할 수 있었는데, Iaas인 AWS 상에서 직접 하나하나 세팅해보고 싶어서 EC2와 RDS를 사용하게 되었습니다.
+장고 세미나에서는 Render.com(Paas)를 사용해서 굉장히 편안하게 배포를 진행할 수 있었는데, Iaas인 AWS 상에서 직접 하나하나 세팅해보고 싶어서 EC2와 RDS를 사용하게 되었습니다.
 신경 쓴 부분: 
 1) RDS와 EC2 사이의 네트워크 외에도 개발 시 서버에 백엔드 팀원들이 접속할 수 있게 세팅하였습니다.
 2) RDS를 연결해서 볼 때 IDE 외에 pgAdmin을 이용해 테이블 확인 및 row 편집이 가능하도록 하였습니다.
