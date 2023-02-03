@@ -341,7 +341,6 @@ class UserWishlistView(generics.ListAPIView):
 class CommentListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = InfoCommentListSerializer
     permission_classes = [IsAuthenticated]
-    pagination_class = RecentCursorPagination
 
     def dispatch(self, request, *args, **kwargs):
         get_object_or_404(ProductInfo, pk=self.kwargs.get('pk'))
