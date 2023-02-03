@@ -49,8 +49,7 @@ RDS: PostGreSQL
 #
 #### 3. Style App
 
-
-1. 유저 정보를 불러오는 **가벼운** 요청과 유저의 팔로워 목록, 팔로잉 목록, 게시물 목록 각각을 불러오는 **무거운** 요청을 받아들이는 URI 분리. 게시물/댓글/대댓글 정보와 그에 공감한 유저 목록에 대한 URI도 역시 분리함.
+- 유저 정보를 불러오는 **가벼운** 요청과 유저의 팔로워 목록, 팔로잉 목록, 게시물 목록 각각을 불러오는 **무거운** 요청을 받아들이는 URI 분리. 게시물/댓글/대댓글 정보와 그에 공감한 유저 목록에 대한 URI도 역시 분리함.
     - `GET /styles/profiles/{id}/`
         - `GET /styles/profiles/{id}/followers/`
         - `GET /styles/profiles/{id}/followings/`
@@ -61,8 +60,8 @@ RDS: PostGreSQL
     - 클라이언트 단에서 비동기적으로 처리 가능하게
 
 
-2. 유저의 게시물 목록 View와 게시물 피드 View를 하나의 URI에서 **query param**으로 구분
-    
+- 유저의 게시물 목록 View와 게시물 피드 View를 하나의 URI에서 **query param**으로 구분
+
     > `GET /styles/posts/?type=&user_id=`
     > 
     > 
@@ -92,7 +91,7 @@ query param이 없거나, 유효하지 않은 경우 `HTTP_400_BAD_REQUEST` 를 
     - 단점: fat view
 
 
-3. 팔로우/팔로우 취소, 공감/공감 취소 등의 api를 각각 **하나의 endpoint**에서 처리
+- 팔로우/팔로우 취소, 공감/공감 취소 등의 api를 각각 **하나의 endpoint**에서 처리
     - `PATCH /styles/profiles/{user_id}/follow/`
     - `PATCH /styles/{object_type}/{object_id}/like/`
     - 토글 방식.
@@ -102,7 +101,7 @@ query param이 없거나, 유효하지 않은 경우 `HTTP_400_BAD_REQUEST` 를 
     - PATCH 활용: 해당 api들은 idempotent하지 않고(같은 요청을 여러 번 했을 때 결과가 달라짐), 실제로 자원이 변경되기 때문.
 
 
-4. `following`, `liked` 등의 field를 두어 클라이언트에서 현재 로그인 한 유저를 기준으로, 대상 유저 instance의 팔로잉 여부나 게시물/댓글/대댓글 instance의 공감 여부를 내려줌
+- `following`, `liked` 등의 field를 두어 클라이언트에서 현재 로그인 한 유저를 기준으로, 대상 유저 instance의 팔로잉 여부나 게시물/댓글/대댓글 instance의 공감 여부를 내려줌
     
     > `"following":`
     > 
@@ -129,7 +128,7 @@ query param이 없거나, 유효하지 않은 경우 `HTTP_400_BAD_REQUEST` 를 
      - serializer 단에서 .to_representation() 오버라이딩
 
 
-5. 게시물에 대한 댓글/대댓글 목록을 nested하게 하나의 응답으로 내려줌.
+- 게시물에 대한 댓글/대댓글 목록을 중첩된 하나의 응답으로 내려줌.
 
     > `GET /styles/posts/{id}/comments`
     > 
