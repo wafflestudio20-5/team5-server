@@ -104,24 +104,29 @@ query param이 없거나, 유효하지 않은 경우 `HTTP_400_BAD_REQUEST` 를 
 - `following`, `liked` 등의 field를 두어 클라이언트에서 현재 로그인 한 유저를 기준으로, 대상 유저 instance의 팔로잉 여부나 게시물/댓글/대댓글 instance의 공감 여부를 내려줌
     
     > `"following":`
+    > 1) `"login required"` 
     > 
-    > 1. `"login required"`
-    > 로그인 하지 않은 유저가 접근했을 때
-    > 2. `null`
-    > 자기 자신의 프로필을 요청했을 때
-    > 3. `true`
-    > 팔로잉 O
-    > 4. `false`
-    > 팔로잉 X
+    >   로그인 하지 않은 유저가 접근했을 때
+    > 2) `null`
+    > 
+    >   자기 자신의 프로필을 요청했을 때
+    > 3) `true`
+    > 
+    >   팔로잉 O
+    > 4) `false`
+    > 
+    >   팔로잉 X
     
     > `"liked":`
+    > 1) `"login required"`
     > 
-    > 1. `"login required"`
-    > 로그인 하지 않은 유저가 접근했을 때
-    > 2. `true`
-    > 공감 O
-    > 3. `false`
-    > 공감 X
+    >   로그인 하지 않은 유저가 접근했을 때
+    > 2) `true`
+    > 
+    >   공감 O
+    > 3) `false`
+    > 
+    >   공감 X
      - 클라이언트에서 해당 필드를 참조하면 바로 컴포넌트를 띄울 수 있도록
          - 팔로우 버튼
          - 공감 버튼
