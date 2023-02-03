@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from accounts.models import CustomUser
 from config.exceptions import InvalidObjectTypeException
 from styles.models import Profile, Follow, Post, Comment, Reply, Like
-from styles.paginations import CommonCursorPagination
+from styles.paginations import CommonCursorPagination, RecentCursorPagination
 from styles.permissions import IsProfileOwnerOrReadOnly, IsWriterOrReadOnly
 from styles.serializers import ProfileSerializer, FollowerSerializer, FollowingSerializer, PostSerializer, \
     CommentListSerializer, CommentDetailSerializer, ReplySerializer, LikeListSerializer
@@ -165,7 +165,7 @@ class CommentListCreateAPIView(generics.ListCreateAPIView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
-        return Comment.objects.select_related('created_by').prefetch_related('replies').filter(
+        return Comment.objects.select_related('created_by').order_by('created_at').prefetch_related('replies').filter(
             post_id__exact=self.kwargs.get('pk'))
 
     def get_serializer_context(self):
