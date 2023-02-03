@@ -32,23 +32,23 @@ RDS: PostGreSQL
 ### ✨ Essence of our Project
 : 클론 코딩을 진행하면서 신경 썼던, 혹은 잘 되었다고 생각하는 부분은?
 #
-#### 1. Accounts App
-- 기본 회원가입/로그인
+#### 📌 1. Accounts App
+- **기본 회원가입/로그인
   - 써드파티 라이브러리인 `dj_rest_auth`를 활용
   - 토큰 인증을 위해 플러그인인 `djangorestframework-simplejwt` 사용
   - 로그인과 회원가입을 커스터마이징하기 위해 플러그인인 `django-allauth` 활용
 #
-- 로그아웃
+- **로그아웃
   - JWT 토큰을 따로 디비에 저장하고 있지 않았기 때문에, 로그아웃 시에 비교적 만료기간이 긴 refresh token을 blacklist 처리해주는 수단이 필요하였음
     - `rest_framework_simplejwt.token_blacklist` 활용
   - api endpoint로는 dj_rest_auth에서 제공하는 로그아웃 api를 활용함. 이때 dj_rest_auth는 로컬의 쿠키를 지워주고 쿠키로 담겨온 토큰을 블랙리스트 처리해야 하나, 쿠키를 인식하지 못하는 문제 발생
     - `djangorestframework-simplejwt`에서 쿠키로 담겨오는 토큰을 허용하지 않는다는 이슈 발견
     - 커스텀 Middleware인 `MoveJWTRefreshCookieIntoTheBody`를 통해 요청의 쿠키에 담긴 refresh token을 body로 옮겨주는 작업을 통해 문제 해결
 #
-- 소셜 로그인
+- **소셜 로그인
 
-#### 2. Shop App
-- 상품 모델링
+#### 📌 2. Shop App
+- **상품 모델링
   - 하나의 상품은 여러 가지 사이즈의 상품들로 나뉘고, 1:1 거래 상품의 경우 여러 가지 사이즈의 상품이 서로 다른 가격을 가질 수 있음.
     - 상품의 원형이 되는 모델인 ProductInfo 생성
   - 1:1 거래 전용 상품이냐, 브랜드에서 파는 스토어 상품이냐에 따라 field에 다소 차이가 있음. 1:1 거래 전용 상품은 입찰이 없으면 가격도 null이 될 수 있기 때문.
@@ -57,22 +57,22 @@ RDS: PostGreSQL
     - 1:1 거래 시 유저는 구매와 판매 모두를 할 수 있지만 스토어 상품 거래 시에는 구매만 가능하기 때문에, 여기서도 구매내역 테이블을 구분하기 위해 Order 모델을 상속하는 TransOrder와 StoreOrder라는 모델을 각각 생성함.
    - 입찰 방식이 또다시 구매/판매로 나뉘기 때문에 여기서도 SalesBid 모델과 PurchaseBid 모델을 통해 테이블을 구분하였음.
 # 
-- 1:1 거래 상품의 입찰 기능
+- **1:1 거래 상품의 입찰 기능
   - SalesBid(판매 입찰)가 상품의 구매 가격으로 연결되며, PurchaseBid(구매 입찰)가 상품의 판매 가격으로 연결됨.
     - purchasebid(구매입찰)는 유저가 구매하기를 원할 때 입찰하는 것이므로, 모델 save 함수를 통해 상품 모델을 참조하는 구매입찰들 중 가장 ‘높은’ 가격을 상품의 sales_price(판매가격)으로 설정함. 
     - 반대로 salesbid(판매입찰)는 유저가 물건을 판매하고 싶을 때 입찰하는 것이므로 모델 save 함수를 통해 판매입찰 중 가장 ‘낮은’ 가격을 상품의 purchase_price(구매가격)으로 설정함. 
 # 
-- 1:1 거래 상품의 구매 기능
+- **1:1 거래 상품의 구매 기능
   - 이미 존재하는 입찰에 대해 유저가 즉시 구매/즉시 판매를 함으로써 거래가 성사됨.
   - 거래가 이루어지면 거래 완료된 입찰은 delete되어야 하고, 상품의 sales_price 혹은 purchase_price도 변할 수 있음.
     - signal을 통해 입찰 모델이 delete될 때 해당 입찰 모델이 참조하던 상품의 가격이 변할 수 있도록 함.
 #
-- 테스트 자동화
+- **테스트 자동화
   - `Pytest-django`를 활용하여 로그인과 회원가입, 입찰과 구매 기능을 테스트함.
   - 이미지들을 S3에 업로드하기 위해 `django-storages`의 S3Boto3Storage를 사용하고 있었기 때문에, 관련 api들을 테스트하기 위한 storage backend로  `dj-inmemorystorage' 패키지 활용.
   - Github Action의 Django CI 활용.
 #
-#### 3. Style App
+#### 📌 3. Style App
 
 - 유저 정보를 불러오는 **가벼운** 요청과 유저의 팔로워 목록, 팔로잉 목록, 게시물 목록 각각을 불러오는 **무거운** 요청을 받아들이는 URI 분리. 게시물/댓글/대댓글 정보와 그에 공감한 유저 목록에 대한 URI도 역시 분리함.
     - `GET /styles/profiles/{id}/`
@@ -229,7 +229,7 @@ query param이 없거나, 유효하지 않은 경우 `HTTP_400_BAD_REQUEST` 를 
     > ```
     >
 #
-#### 4. Deployment
+#### 📌 4. Deployment
 ##### AWS: EC2, RDS, S3, CodeDeploy
 사용 이유: 
 장고 세미나에서는 Render.com(Paas)를 사용해서 굉장히 편안하게 배포를 진행할 수 있었는데, Iaas인 AWS 상에서 직접 하나하나 세팅해보고 싶어서 EC2와 RDS를 사용하게 되었습니다.
