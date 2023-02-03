@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from accounts.models import CustomUser
 from config.exceptions import InvalidObjectTypeException
 from styles.models import Profile, Follow, Post, Comment, Reply, Like
-from styles.paginations import CommonCursorPagination, RecentCursorPagination
+from styles.paginations import CommonCursorPagination
 from styles.permissions import IsProfileOwnerOrReadOnly, IsWriterOrReadOnly
 from styles.serializers import ProfileSerializer, FollowerSerializer, FollowingSerializer, PostSerializer, \
     CommentListSerializer, CommentDetailSerializer, ReplySerializer, LikeListSerializer
