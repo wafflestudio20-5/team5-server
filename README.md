@@ -48,7 +48,150 @@ RDS: PostGreSQL
 내용
 #
 #### 3. Style App
-내용
+
+
+1. 유저 정보를 불러오는 **가벼운** 요청과 유저의 팔로워 목록, 팔로잉 목록, 게시물 목록 각각을 불러오는 **무거운** 요청을 받아들이는 URI 분리. 게시물/댓글/대댓글 정보와 그에 공감한 유저 목록에 대한 URI도 역시 분리함.
+    - `GET /styles/profiles/{id}/`
+        - `GET /styles/profiles/{id}/followers/`
+        - `GET /styles/profiles/{id}/followings/`
+        - `GET /styles/posts/?type=default&user_id=`
+    - `GET /styles/posts/{id}/`
+        - `GET /styles/posts/{id}/likes/`
+    - DetailView 안에 ListView가 중첩된 구조
+    - 클라이언트 단에서 비동기적으로 처리 가능하게
+
+
+2. 유저의 게시물 목록 View와 게시물 피드 View를 하나의 URI에서 **query param**으로 구분
+    
+    > `GET /styles/posts/?type=&user_id=`
+    > 
+    > 
+    > 게시물 목록. query param에 따라 요청을 달리 보낼 수 있습니다. CursorPagination 적용.
+query param이 없거나, 유효하지 않은 경우 `HTTP_400_BAD_REQUEST` 를 내려줌.
+    > 
+    > query param 예시:
+    > 
+    > - `?type=popular`
+    >     
+    >     인기 피드. 추후 구현 예정
+    >     
+    > - `?type=latest`
+    >     
+    >     최신 피드. 아무나 접근 가능. 생성 시간 역순으로 정렬.
+    >     
+    > - `?type=following`
+    >     
+    >     팔로잉 피드. 로그인 한 유저만 접근 가능. 생성 시간 역순으로 정렬.
+    >     로그인 하지 않은 유저가 접근 시 `HTTP_401_UNAUTHORIZED` 를 내려줌.
+    >     
+    > - `?type=default&user_id={user_id}`
+    >     
+    >     특정 프로필(user_id)의 게시물 목록. 아무나 접근 가능. 생성 시간 역순으로 정렬.
+    >     default type일 경우, user_id를 넣어주지 않으면 `HTTP_400_BAD_REQUEST` 를 내려줌. 
+    >     
+    - 단점: fat view
+
+
+3. 팔로우/팔로우 취소, 공감/공감 취소 등의 api를 각각 **하나의 endpoint**에서 처리
+    - `PATCH /styles/profiles/{user_id}/follow/`
+    - `PATCH /styles/{object_type}/{object_id}/like/`
+    - 토글 방식.
+        - 언팔로우→팔로우 (Follow object create)
+        - 팔로우→언팔로우 (Follow object delete)
+    - RESTful하지 않으나 편리한 구현
+    - PATCH 활용: 해당 api들은 idempotent하지 않고(같은 요청을 여러 번 했을 때 결과가 달라짐), 실제로 자원이 변경되기 때문.
+
+
+4. `following`, `liked` 등의 field를 두어 클라이언트에서 현재 로그인 한 유저를 기준으로, 대상 유저 instance의 팔로잉 여부나 게시물/댓글/대댓글 instance의 공감 여부를 내려줌
+    
+    > `"following":`
+    > 
+    > 1. `"login required"`
+    > 로그인 하지 않은 유저가 접근했을 때
+    > 2. `null`
+    > 자기 자신의 프로필을 요청했을 때
+    > 3. `true`
+    > 팔로잉 O
+    > 4. `false`
+    > 팔로잉 X
+    
+    > `"liked":`
+    > 
+    > 1. `"login required"`
+    > 로그인 하지 않은 유저가 접근했을 때
+    > 2. `true`
+    > 공감 O
+    > 3. `false`
+    > 공감 X
+     - 클라이언트에서 해당 필드를 참조하면 바로 컴포넌트를 띄울 수 있도록
+         - 팔로우 버튼
+         - 공감 버튼
+     - serializer 단에서 .to_representation() 오버라이딩
+
+
+5. 게시물에 대한 댓글/대댓글 목록을 nested하게 하나의 응답으로 내려줌.
+
+    > `GET /styles/posts/{id}/comments`
+    > 
+    > 
+    > 게시물(id)의 댓글&대댓글 목록. 로그인 한 유저만 접근 가능. 댓글은 생성 시간 역순으로, 대댓글은 생성 시간 순으로 정렬.
+    > 
+    > Response 예시:
+    > 
+    > ```json
+    > [
+    >   {
+    >     "id": 5,
+    >     "content": "reply created by admin", # 댓글 내용
+    >     "created_by": { # 댓글 작성자 프로필
+    >       "user_id": 1,
+    >       "user_name": "admin",
+    >       "profile_name": "948d791",
+    >       "image": null,
+    >       "following": null
+    >     },
+    >     "created_at": "2023-01-27T19:45:49.499747+09:00", # 댓글 생성 시간
+    >     "replies": [ # 댓글에 달린 대댓글 리스트
+    >       {
+    >         "id": 13,
+    >         "content": "reply!", # 대댓글 내용
+    >         "to_profile": { # 대댓글 보내는 대상의 프로필
+    >           "user_id": 3,
+    >           "profile_name": "08b7103"
+    >         },
+    >         "created_by": { # 대댓글 작성자 프로필
+    >           "user_id": 2,
+    >           "user_name": "jeongjinan123",
+    >           "profile_name": "377bc71",
+    >           "image": null,
+    >           "following": true
+    >         },
+    >         "created_at": "2023-01-29T00:44:30.607082+09:00", # 대댓글 생성 시간
+    >         "num_likes": 1, # 공감 수
+    >         "liked": false # 공감 여부(현재 로그인 한 유저 기준)
+    >       }
+    >     ],
+    >     "num_likes": 1, # 공감 수
+    >     "liked": false # 공감 여부(현재 로그인 한 유저 기준)
+    >   },
+    >   {
+    >     "id": 3,
+    >     "content": "comment created by admin",
+    >     "created_by": {
+    >       "user_id": 1,
+    >       "user_name": "admin",
+    >       "profile_name": "948d791",
+    >       "image": null,
+    >       "following": null
+    >     },
+    >     "created_at": "2023-01-27T17:28:22.049404+09:00",
+    >     "replies": [],
+    >     "num_likes": 0,
+    >     "liked": false
+    >   }
+    > ]
+    > ```
+    >
 #
 #### 4. Deployment
 ##### AWS: EC2, RDS, S3, CodeDeploy
