@@ -168,6 +168,9 @@ class Comment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     likes = GenericRelation(Like)
 
+    class Meta:
+        ordering = ['-created_at']
+
 
 class Reply(models.Model):
     info = models.ForeignKey(ProductInfo, on_delete=models.CASCADE, related_name='replies')
