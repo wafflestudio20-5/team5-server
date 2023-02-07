@@ -48,13 +48,13 @@ class ProfileSerializer(serializers.ModelSerializer):
     def get_num_followings(self, obj: Profile):
         return obj.followings.count()
 
-    def to_internal_value(self, data):
-        internal_value = super().to_internal_value(data)
-        try:
-            image = self.context['request'].FILES['image']
-            return {**internal_value, 'image': image}
-        except KeyError:
-            return {**internal_value, 'image': None}
+    # def to_internal_value(self, data):
+    #     internal_value = super().to_internal_value(data)
+    #     try:
+    #         image = self.context['request'].FILES['image']
+    #         return {**internal_value, 'image': image}
+    #     except KeyError:
+    #         return {**internal_value, 'image': None}
 
     def to_representation(self, instance: Profile):
         representation = super().to_representation(instance)
